@@ -7,7 +7,8 @@
     "start": "ts-node index.ts",
     "dev": "ts-node-dev index.ts",
     "docker:build": "docker build -t protravka-mysql .",
-    "docker:run": "docker run --env-file .env -d -p 3000:3000 protravka-mysql"
+    "docker:run": "docker run --env-file .env -d -p 3000:3000 protravka-mysql",
+    "docker:watch": "nodemon --watch Dockerfile --exec \"npm run docker:build && npm run docker:run\""
   },
   "author": "Your Name",
   "license": "MIT",
