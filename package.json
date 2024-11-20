@@ -6,7 +6,8 @@
   "scripts": {
     "start": "ts-node index.ts",
     "dev": "ts-node-dev index.ts",
-    "docker:run": "docker run -d -p 3000:3000 protravka-backend"
+    "docker:build": "docker build -t protravka-mysql .",
+    "docker:run": "docker run --env-file .env -d -p 3000:3000 protravka-mysql"
   },
   "author": "Your Name",
   "license": "MIT",
