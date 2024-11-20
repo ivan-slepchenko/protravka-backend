@@ -1,6 +1,6 @@
-
 import { Sequelize } from 'sequelize-typescript';
 import dotenv from 'dotenv';
+import { Order } from './models/Order';
 
 dotenv.config();
 
@@ -10,5 +10,5 @@ export const sequelize = new Sequelize({
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  models: [__dirname + '/models'], // Path to your models
+  models: [Order], // Add Order model
 });
