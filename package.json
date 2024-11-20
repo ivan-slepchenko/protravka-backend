@@ -6,9 +6,10 @@
   "scripts": {
     "start": "ts-node index.ts",
     "dev": "ts-node-dev index.ts",
-    "docker:build": "docker build -t protravka-mysql .",
-    "docker:run": "docker run --env-file .env -d -p 3000:3000 protravka-mysql",
-    "docker:watch": "nodemon --watch Dockerfile --exec \"npm run docker:build && npm run docker:run\""
+    "docker:build": "node -r dotenv/config -e \"require('child_process').execSync('docker build --build-arg DB_PASSWORD=' + process.env.DB_PASSWORD + ' --build-arg DB_NAME=' + process.env.DB_NAME + ' --build-arg DB_USERNAME=' + process.env.DB_USERNAME + ' --build-arg DB_PORT=' + process.env.DB_PORT + ' -t protravka-mysql:latest .', {stdio: 'inherit'})\"",
+    "docker:push": "docker login && docker tag protravka-mysql:latest ivanslepchenko/protravka-mysql:latest && docker push ivanslepchenko/protravka-mysql:latest",
+    "docker:run": "node -r dotenv/config -e \"require('child_process').execSync('docker run --name protravka-mysql -d -p ' + process.env.DB_PORT + ':' + process.env.DB_PORT + ' protravka-mysql', {stdio: 'inherit'})\"",
+    "docker:watch": "nodemon --watch Dockerfile --exec \"npm run docker:build && npm run docker:push && npm run docker:run\""
   },
   "author": "Your Name",
   "license": "MIT",
@@ -16,6 +17,7 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.9.1",
     "@types/sequelize": "^4.28.20",
+    "nodemon": "^3.1.7",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.3"

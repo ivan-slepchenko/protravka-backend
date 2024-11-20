@@ -1,11 +1,17 @@
 # Use the official MySQL image from the Docker Hub
 FROM mysql:8.0
 
-# Set environment variables for MySQL using Docker environment variables
-ENV MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
-ENV MYSQL_DATABASE=${DB_NAME}
-ENV MYSQL_USER=${DB_USERNAME}
-ENV MYSQL_PASSWORD=${DB_PASSWORD}
+# Define build arguments
+ARG DB_PASSWORD
+ARG DB_NAME
+ARG DB_USERNAME
+ARG DB_PORT
+
+# Set environment variables for MySQL using build arguments
+ENV MYSQL_ROOT_PASSWORD=$DB_PASSWORD
+ENV MYSQL_DATABASE=$DB_NAME
+ENV MYSQL_USER=$DB_USERNAME
+ENV MYSQL_PASSWORD=$DB_PASSWORD
 
 # Expose the specified MySQL port
 EXPOSE ${DB_PORT}
