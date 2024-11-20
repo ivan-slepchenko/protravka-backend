@@ -8,8 +8,8 @@
     "dev": "ts-node-dev index.ts",
     "docker:build": "node -r dotenv/config -e \"require('child_process').execSync('docker build --build-arg DB_PASSWORD=' + process.env.DB_PASSWORD + ' --build-arg DB_NAME=' + process.env.DB_NAME + ' --build-arg DB_USERNAME=' + process.env.DB_USERNAME + ' --build-arg DB_PORT=' + process.env.DB_PORT + ' -t protravka-mysql:latest .', {stdio: 'inherit'})\"",
     "docker:push": "docker login && docker tag protravka-mysql:latest ivanslepchenko/protravka-mysql:latest && docker push ivanslepchenko/protravka-mysql:latest",
-    "docker:run": "node -r dotenv/config -e \"require('child_process').execSync('docker run --name protravka-mysql -d -p ' + process.env.DB_PORT + ':' + process.env.DB_PORT + ' protravka-mysql', {stdio: 'inherit'})\"",
-    "docker:watch": "nodemon --watch Dockerfile --exec \"npm run docker:build && npm run docker:push && npm run docker:run\""
+    "docker:run": "node -r dotenv/config -e \"require('child_process').execSync('docker rm -f protravka-mysql || true && docker run --name protravka-mysql -d -p ' + process.env.DB_PORT + ':' + process.env.DB_PORT + ' protravka-mysql', {stdio: 'inherit'})\"",
+    "docker:watch": "nodemon --watch Dockerfile --watch .env --exec \"npm run docker:build && npm run docker:push && npm run docker:run\""
   },
   "author": "Your Name",
   "license": "MIT",
