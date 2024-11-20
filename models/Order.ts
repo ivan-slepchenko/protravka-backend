@@ -1,74 +1,44 @@
-import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { ProductDetail } from './ProductDetail';
 
-@Table
-export class Order extends Model {
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+@Entity()
+export class Order {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
+  @Column()
   lotNumber!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column()
   status!: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: false,
-  })
+  @Column()
   recipeDate!: string;
 
-  @Column({
-    type: DataType.DATE,
-    allowNull: false,
-  })
+  @Column()
   applicationDate!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column()
   operator!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column()
   crop!: string;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column()
   variety!: string;
 
-  @Column({
-    type: DataType.FLOAT,
-    allowNull: false,
-  })
+  @Column('float')
   tkw!: number;
 
-  @Column({
-    type: DataType.FLOAT,
-    allowNull: false,
-  })
+  @Column('float')
   quantity!: number;
 
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
+  @Column()
   packaging!: string;
 
-  @Column({
-    type: DataType.FLOAT,
-    allowNull: false,
-  })
+  @Column('float')
   bagSize!: number;
 
-  @HasMany(() => ProductDetail)
+  @OneToMany(() => ProductDetail, (productDetail) => productDetail.order)
   productDetails!: ProductDetail[];
 }
