@@ -26,4 +26,7 @@ export class ProductDetail {
 
   @Column('float')
   rate!: number;
+
+  @Column('int')
+  index!: number; // Add index column
 }

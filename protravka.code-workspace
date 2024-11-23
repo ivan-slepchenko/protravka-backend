@@ -1,10 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"name": "protravka-web",
+			"path": "../protravka-web"
 		},
 		{
-			"path": "../protravka-web"
+			"name": "protravka-backend",
+			"path": "."
 		}
 	],
 	"settings": {}

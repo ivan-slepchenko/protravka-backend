@@ -1,21 +1,24 @@
-
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import { AppDataSource } from './database';
 import { Order } from './models/Order';
-import { ProductDetail } from './models/ProductDetail';
 import "reflect-metadata"
+import { Not } from 'typeorm';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
-
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
 app.get('/api/orders', async (req, res) => {
   try {
-    const orders = await AppDataSource.getRepository(Order).find({ where: { status: 'active' } });
+    const orders = await AppDataSource.getRepository(Order).find({ where: { status: Not('archived') } });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -36,7 +39,7 @@ app.post('/api/orders', async (req, res) => {
     const order = await AppDataSource.getRepository(Order).save(req.body);
     res.status(201).json(order);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create order' });
+    res.status(500).json({ error: 'Failed to create order', message: error });
   }
 });
 

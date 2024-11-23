@@ -16,5 +16,4 @@ export const AppDataSource = new DataSource({
   migrationsTableName: 'migrations',
   entities: [Order, ProductDetail],
   synchronize: true,
-  logging: true,
 });
