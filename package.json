@@ -9,8 +9,13 @@
     "build": "tsc",
     "migration:create": "typeorm migration:create src/migrations -n",
     "migration:generate": "npm run build && typeorm migration:generate -d dist/database.js -p src/migrations/auto",
-    "migration:run": "npm run build && typeorm -- migration:run -d dist/database.js",
-    "migration:revert": "npm run build && typeorm migration:revert -d dist/database.js"
+    "migration:run": "npm run build && typeorm migration:run -d dist/database.js",
+    "migration:revert": "npm run build && typeorm migration:revert -d dist/database.js",
+    "docker-build": "npm run increase-package-version && docker build -t protravka-backend .",
+    "docker-run": "docker run -p 3000:3000 protravka-backend",
+    "increase-package-version": "npm version patch",
+    "deploy": "npm run docker-build && wsl --setdefault Ubuntu && bash deploy.sh",
+    "ssh-azure-container": "az containerapp exec --name protravka-backend --resource-group protravka --container protravka-backend --command \"/bin/sh\""
   },
   "author": "Your Name",
   "license": "MIT",
