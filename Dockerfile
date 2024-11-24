@@ -33,7 +33,7 @@ COPY .env.production .env
 RUN npm install --only=production
 
 # Expose port 3000
-EXPOSE 3000
+EXPOSE 3081
 
 # Start the application
 CMD ["node", "dist/index.js"]

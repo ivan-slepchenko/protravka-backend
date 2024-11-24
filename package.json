@@ -12,7 +12,7 @@
     "migration:run": "npm run build && typeorm migration:run -d dist/database.js",
     "migration:revert": "npm run build && typeorm migration:revert -d dist/database.js",
     "docker-build": "npm run increase-package-version && docker build -t protravka-backend .",
-    "docker-run": "docker run -p 3000:3000 protravka-backend",
+    "docker-run": "docker run -p 3081:3081 protravka-backend",
     "get-version": "node -p \"require('./package.json').version\"",
     "increase-package-version": "npm version patch",
     "deploy": "npm run docker-build && wsl --setdefault Ubuntu && bash deploy.sh",
