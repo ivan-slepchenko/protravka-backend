@@ -39,6 +39,6 @@ export class Order {
   @Column('float')
   bagSize!: number;
 
-  @OneToMany(() => ProductDetail, (productDetail) => productDetail.order)
+  @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
   productDetails!: ProductDetail[];
 }

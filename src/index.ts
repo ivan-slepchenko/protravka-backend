@@ -9,6 +9,7 @@ import log4js from 'log4js';
 import fs from 'fs';
 import path from 'path';
 import { version } from '../package.json';
+import { ProductDetail } from './models/ProductDetail';
 
 dotenv.config({ path: '.env' });
 
@@ -39,7 +40,10 @@ app.get('/', (req, res) => {
 });
 app.get('/api/orders', async (req, res) => {
   try {
-    const orders = await AppDataSource.getRepository(Order).find({ where: { status: Not('archived') } });
+    const orders = await AppDataSource.getRepository(Order).find({ 
+      where: { status: Not('archived') },
+      relations: ['productDetails'] // Include ProductDetails relationship
+    });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch orders' });
@@ -48,7 +52,10 @@ app.get('/api/orders', async (req, res) => {
 
 app.get('/api/orders/archived', async (req, res) => {
   try {
-    const archivedOrders = await AppDataSource.getRepository(Order).find({ where: { status: 'archived' } });
+    const archivedOrders = await AppDataSource.getRepository(Order).find({ 
+      where: { status: 'archived' },
+      relations: ['productDetails'] // Include ProductDetails relationship
+    });
     res.json(archivedOrders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch archived orders' });
@@ -57,8 +64,19 @@ app.get('/api/orders/archived', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const order = await AppDataSource.getRepository(Order).save(req.body);
-    res.status(201).json(order);
+    const { productDetails, ...orderData } = req.body;
+    const orders = AppDataSource.getRepository(Order).create({
+      ...orderData,
+      productDetails
+    });
+
+    logger.debug('Order Data:', orders);
+
+    const savedOrders = await AppDataSource.getRepository(Order).save(orders);
+
+    logger.debug('Saved Order:', savedOrders);
+
+    res.status(201).json(savedOrders);
   } catch (error) {
     res.status(500).json({ error: 'Failed to create order', message: error });
   }
