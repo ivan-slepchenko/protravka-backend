@@ -49,6 +49,7 @@ app.get('/api/orders', async (req, res) => {
     });
     res.json(orders);
   } catch (error) {
+    logger.error('Failed to fetch orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
   }
 });
@@ -61,6 +62,7 @@ app.get('/api/orders/archived', async (req, res) => {
     });
     res.json(archivedOrders);
   } catch (error) {
+    logger.error('Failed to fetch archived orders:', error);
     res.status(500).json({ error: 'Failed to fetch archived orders' });
   }
 });
@@ -85,6 +87,7 @@ app.post('/api/orders', async (req, res) => {
 
     res.status(201).json(savedOrders);
   } catch (error) {
+    logger.error('Failed to create order:', error);
     res.status(500).json({ error: 'Failed to create order', message: error });
   }
 });
@@ -102,6 +105,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
       res.status(404).json({ error: 'Order not found' });
     }
   } catch (error) {
+    logger.error('Failed to update order status:', error);
     res.status(500).json({ error: 'Failed to update order status' });
   }
 });
@@ -117,6 +121,7 @@ app.delete('/api/orders/:id', async (req, res) => {
       res.status(404).json({ error: 'Order not found' });
     }
   } catch (error) {
+    logger.error('Failed to delete order:', error);
     res.status(500).json({ error: 'Failed to delete order' });
   }
 });
@@ -126,6 +131,7 @@ app.get('/api/operators', async (req, res) => {
     const operators = await AppDataSource.getRepository(Operator).find();
     res.json(operators);
   } catch (error) {
+    logger.error('Failed to fetch operators:', error);
     res.status(500).json({ error: 'Failed to fetch operators' });
   }
 });
@@ -136,6 +142,7 @@ app.post('/api/operators', async (req, res) => {
     const savedOperator = await AppDataSource.getRepository(Operator).save(operator);
     res.status(201).json(savedOperator);
   } catch (error) {
+    logger.error('Failed to create operator:', error);
     res.status(500).json({ error: 'Failed to create operator' });
   }
 });
@@ -152,6 +159,7 @@ app.put('/api/operators/:id', async (req, res) => {
       res.status(404).json({ error: 'Operator not found' });
     }
   } catch (error) {
+    logger.error('Failed to update operator:', error);
     res.status(500).json({ error: 'Failed to update operator' });
   }
 });
@@ -167,6 +175,7 @@ app.delete('/api/operators/:id', async (req, res) => {
       res.status(404).json({ error: 'Operator not found' });
     }
   } catch (error) {
+    logger.error('Failed to delete operator:', error);
     res.status(500).json({ error: 'Failed to delete operator' });
   }
 });
@@ -176,6 +185,7 @@ app.get('/api/crops', async (req, res) => {
     const crops = await AppDataSource.getRepository(Crop).find({ relations: ['varieties'] });
     res.json(crops);
   } catch (error) {
+    logger.error('Failed to fetch crops:', error);
     res.status(500).json({ error: 'Failed to fetch crops' });
   }
 });
@@ -186,6 +196,7 @@ app.post('/api/crops', async (req, res) => {
     const savedCrop = await AppDataSource.getRepository(Crop).save(crop);
     res.status(201).json(savedCrop);
   } catch (error) {
+    logger.error('Failed to create crop:', error);
     res.status(500).json({ error: 'Failed to create crop' });
   }
 });
@@ -202,6 +213,7 @@ app.post('/api/crops/:cropId/varieties', async (req, res) => {
       res.status(404).json({ error: 'Crop not found' });
     }
   } catch (error) {
+    logger.error('Failed to create variety:', error);
     res.status(500).json({ error: 'Failed to create variety' });
   }
 });
@@ -209,15 +221,32 @@ app.post('/api/crops/:cropId/varieties', async (req, res) => {
 app.delete('/api/crops/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const crop = await AppDataSource.getRepository(Crop).findOneBy({ id });
+    const crop = await AppDataSource.getRepository(Crop).findOne({ where: { id }, relations: ['varieties'] });
     if (crop) {
       await AppDataSource.getRepository(Crop).remove(crop);
-      res.json({ message: 'Crop deleted successfully' });
+      res.json({ message: 'Crop and its varieties deleted successfully' });
     } else {
       res.status(404).json({ error: 'Crop not found' });
     }
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete crop' });
+    logger.error('Failed to delete crop and its varieties:', error);
+    res.status(500).json({ error: 'Failed to delete crop and its varieties' });
+  }
+});
+
+app.delete('/api/crops/:cropId/varieties/:varietyId', async (req, res) => {
+  try {
+    const { cropId, varietyId } = req.params;
+    const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId, crop: { id: cropId } });
+    if (variety) {
+      await AppDataSource.getRepository(Variety).remove(variety);
+      res.json({ message: 'Variety deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Variety not found' });
+    }
+  } catch (error) {
+    logger.error('Failed to delete variety:', error);
+    res.status(500).json({ error: 'Failed to delete variety' });
   }
 });
 
