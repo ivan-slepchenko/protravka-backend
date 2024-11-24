@@ -1,4 +1,3 @@
-
 # Stage 1: Build the Node.js application
 FROM node:18 AS build
 
@@ -26,6 +25,9 @@ WORKDIR /app
 # Copy the built files from the previous stage
 COPY --from=build /app/dist /app/dist
 COPY package.json package-lock.json ./
+
+# Copy the appropriate .env file
+COPY .env.production .env
 
 # Install only production dependencies
 RUN npm install --only=production

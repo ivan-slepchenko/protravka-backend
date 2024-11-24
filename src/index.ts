@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { version } from '../package.json';
 
-dotenv.config();
+dotenv.config({ path: '.env' });
 
 log4js.configure({
   appenders: {
