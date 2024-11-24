@@ -21,6 +21,7 @@ log4js.configure({
 });
 
 export const logger = log4js.getLogger();
+logger.level = 'debug';
 
 const app = express();
 const port = process.env.PORT || 3000;

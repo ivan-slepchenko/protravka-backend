@@ -2,11 +2,12 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
-import { logger } from '.';
+import log4js from 'log4js';
 
 dotenv.config();
 
-logger.level = 'debug';
+export const logger = log4js.getLogger();
+
 
 logger.debug(`DB_HOST: ${process.env.DB_HOST}`);
 logger.debug(`DB_PORT: ${process.env.DB_PORT}`);
