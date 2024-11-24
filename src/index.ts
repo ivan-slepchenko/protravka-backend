@@ -109,6 +109,12 @@ app.get('/api/logs', (req, res) => {
 
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
+  logger.debug(`DB_HOST: ${process.env.DB_HOST}`);
+  logger.debug(`DB_PORT: ${process.env.DB_PORT}`);
+  logger.debug(`DB_USERNAME: ${process.env.DB_USERNAME}`);
+  logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
+  logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
+
   AppDataSource.initialize()
     .then(() => logger.info('Database connected'))
     .catch((err: any) => logger.error('Unable to connect to the database:', err));
