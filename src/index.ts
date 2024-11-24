@@ -5,14 +5,31 @@ import { AppDataSource } from './database';
 import { Order } from './models/Order';
 import "reflect-metadata"
 import { Not } from 'typeorm';
+import log4js from 'log4js';
 
 dotenv.config();
+
+log4js.configure({
+  appenders: {
+    file: { type: 'dateFile', filename: 'logs/app.log', pattern: '.yyyy-MM-dd', compress: true },
+    console: { type: 'console' }
+  },
+  categories: { default: { appenders: ['file', 'console'], level: 'info' } }
+});
+
+export const logger = log4js.getLogger();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
+
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
+});
+
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
@@ -76,8 +93,8 @@ app.delete('/api/orders/:id', async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  logger.info(`Server is running on port ${port}`);
   AppDataSource.initialize()
-    .then(() => console.log('Database connected'))
-    .catch((err: any) => console.error('Unable to connect to the database:', err));
+    .then(() => logger.info('Database connected'))
+    .catch((err: any) => logger.error('Unable to connect to the database:', err));
 });

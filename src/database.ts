@@ -2,8 +2,18 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
+import log4js from 'log4js';
+import { logger } from '.';
 
 dotenv.config();
+
+logger.level = 'debug';
+
+logger.debug(`DB_HOST: ${process.env.DB_HOST}`);
+logger.debug(`DB_PORT: ${process.env.DB_PORT}`);
+logger.debug(`DB_USERNAME: ${process.env.DB_USERNAME}`);
+logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
+logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -17,3 +27,11 @@ export const AppDataSource = new DataSource({
   entities: [Order, ProductDetail],
   synchronize: true,
 });
+
+AppDataSource.initialize()
+  .then(() => {
+    logger.info('Data Source has been initialized successfully.');
+  })
+  .catch((err) => {
+    logger.error('Error during Data Source initialization:', err);
+  });
