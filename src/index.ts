@@ -8,6 +8,7 @@ import { Not } from 'typeorm';
 import log4js from 'log4js';
 import fs from 'fs';
 import path from 'path';
+import { version } from '../package.json';
 
 dotenv.config();
 
@@ -33,7 +34,7 @@ app.use((req, res, next) => {
 });
 
 app.get('/', (req, res) => {
-  res.send('Hello World!');
+  res.send(`Hello World! Version: ${version}`);
 });
 app.get('/api/orders', async (req, res) => {
   try {
