@@ -11,6 +11,8 @@ import path from 'path';
 import { version } from '../package.json';
 import { ProductDetail } from './models/ProductDetail';
 import { Operator } from './models/Operator';
+import { Crop } from './models/Crop';
+import { Variety } from './models/Variety';
 
 dotenv.config({ path: '.env' });
 
@@ -65,10 +67,13 @@ app.get('/api/orders/archived', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { productDetails, operator, ...orderData } = req.body;
+    const { productDetails, operator, crop, variety, ...orderData } = req.body;
+    
     const orders = AppDataSource.getRepository(Order).create({
       ...orderData,
       operator,
+      crop,
+      variety,
       productDetails
     });
 
@@ -163,6 +168,56 @@ app.delete('/api/operators/:id', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete operator' });
+  }
+});
+
+app.get('/api/crops', async (req, res) => {
+  try {
+    const crops = await AppDataSource.getRepository(Crop).find({ relations: ['varieties'] });
+    res.json(crops);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch crops' });
+  }
+});
+
+app.post('/api/crops', async (req, res) => {
+  try {
+    const crop = AppDataSource.getRepository(Crop).create(req.body);
+    const savedCrop = await AppDataSource.getRepository(Crop).save(crop);
+    res.status(201).json(savedCrop);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create crop' });
+  }
+});
+
+app.post('/api/crops/:cropId/varieties', async (req, res) => {
+  try {
+    const { cropId } = req.params;
+    const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
+    if (crop) {
+      const variety = AppDataSource.getRepository(Variety).create({ ...req.body, crop });
+      const savedVariety = await AppDataSource.getRepository(Variety).save(variety);
+      res.status(201).json(savedVariety);
+    } else {
+      res.status(404).json({ error: 'Crop not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create variety' });
+  }
+});
+
+app.delete('/api/crops/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const crop = await AppDataSource.getRepository(Crop).findOneBy({ id });
+    if (crop) {
+      await AppDataSource.getRepository(Crop).remove(crop);
+      res.json({ message: 'Crop deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Crop not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete crop' });
   }
 });
 

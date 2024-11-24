@@ -1,6 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { ProductDetail } from './ProductDetail';
 import { Operator } from './Operator';
+import { Crop } from './Crop';
+import { Variety } from './Variety';
 
 @Entity()
 export class Order {
@@ -22,11 +24,11 @@ export class Order {
   @ManyToOne(() => Operator, { eager: true })
   operator!: Operator;
 
-  @Column()
-  crop!: string;
+  @ManyToOne(() => Crop, { eager: true })
+  crop!: Crop;
 
-  @Column()
-  variety!: string;
+  @ManyToOne(() => Variety, { eager: true })
+  variety!: Variety;
 
   @Column('float')
   tkw!: number;
