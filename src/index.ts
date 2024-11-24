@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { version } from '../package.json';
 import { ProductDetail } from './models/ProductDetail';
+import { Operator } from './models/Operator';
 
 dotenv.config({ path: '.env' });
 
@@ -42,7 +43,7 @@ app.get('/api/orders', async (req, res) => {
   try {
     const orders = await AppDataSource.getRepository(Order).find({ 
       where: { status: Not('archived') },
-      relations: ['productDetails'] // Include ProductDetails relationship
+      relations: ['productDetails', 'operator'] // Include ProductDetails and Operator relationships
     });
     res.json(orders);
   } catch (error) {
@@ -54,7 +55,7 @@ app.get('/api/orders/archived', async (req, res) => {
   try {
     const archivedOrders = await AppDataSource.getRepository(Order).find({ 
       where: { status: 'archived' },
-      relations: ['productDetails'] // Include ProductDetails relationship
+      relations: ['productDetails', 'operator'] // Include ProductDetails relationship
     });
     res.json(archivedOrders);
   } catch (error) {
@@ -64,9 +65,10 @@ app.get('/api/orders/archived', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { productDetails, ...orderData } = req.body;
+    const { productDetails, operator, ...orderData } = req.body;
     const orders = AppDataSource.getRepository(Order).create({
       ...orderData,
+      operator,
       productDetails
     });
 
@@ -111,6 +113,56 @@ app.delete('/api/orders/:id', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
+app.get('/api/operators', async (req, res) => {
+  try {
+    const operators = await AppDataSource.getRepository(Operator).find();
+    res.json(operators);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch operators' });
+  }
+});
+
+app.post('/api/operators', async (req, res) => {
+  try {
+    const operator = AppDataSource.getRepository(Operator).create(req.body);
+    const savedOperator = await AppDataSource.getRepository(Operator).save(operator);
+    res.status(201).json(savedOperator);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create operator' });
+  }
+});
+
+app.put('/api/operators/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
+    if (operator) {
+      AppDataSource.getRepository(Operator).merge(operator, req.body);
+      const updatedOperator = await AppDataSource.getRepository(Operator).save(operator);
+      res.json(updatedOperator);
+    } else {
+      res.status(404).json({ error: 'Operator not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update operator' });
+  }
+});
+
+app.delete('/api/operators/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
+    if (operator) {
+      await AppDataSource.getRepository(Operator).remove(operator);
+      res.json({ message: 'Operator deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Operator not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete operator' });
   }
 });
 

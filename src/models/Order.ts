@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { ProductDetail } from './ProductDetail';
+import { Operator } from './Operator';
 
 @Entity()
 export class Order {
@@ -18,8 +19,8 @@ export class Order {
   @Column()
   applicationDate!: string;
 
-  @Column()
-  operator!: string;
+  @ManyToOne(() => Operator, { eager: true })
+  operator!: Operator;
 
   @Column()
   crop!: string;

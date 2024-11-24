@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
 import log4js from 'log4js';
+import { Operator } from './models/Operator';
 
 dotenv.config();
 
@@ -15,6 +16,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail],
+  entities: [Order, ProductDetail, Operator],
   synchronize: true,
 });
