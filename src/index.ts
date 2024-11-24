@@ -6,6 +6,8 @@ import { Order } from './models/Order';
 import "reflect-metadata"
 import { Not } from 'typeorm';
 import log4js from 'log4js';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -90,6 +92,17 @@ app.delete('/api/orders/:id', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to delete order' });
   }
+});
+
+app.get('/api/logs', (req, res) => {
+  const logFilePath = path.join(__dirname, '../logs/app.log');
+  fs.readFile(logFilePath, 'utf8', (err, data) => {
+    if (err) {
+      logger.error('Failed to read log file:', err);
+      return res.status(500).json({ error: 'Failed to read log file' });
+    }
+    res.type('text/plain').send(data);
+  });
 });
 
 app.listen(port, () => {
