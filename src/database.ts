@@ -2,7 +2,6 @@ import { DataSource } from 'typeorm';
 import dotenv from 'dotenv';
 import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
-import log4js from 'log4js';
 import { logger } from '.';
 
 dotenv.config();
