@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Order } from './Order';
+import { Product } from './Product';
 
 @Entity()
 export class ProductDetail {
@@ -9,8 +10,8 @@ export class ProductDetail {
   @ManyToOne(() => Order, (order) => order.productDetails)
   order!: Order;
 
-  @Column()
-  name!: string;
+  @ManyToOne(() => Product)
+  product!: Product;
 
   @Column('float')
   quantity!: number;
@@ -29,4 +30,5 @@ export class ProductDetail {
 
   @Column('int')
   index!: number; // Add index column
+
 }

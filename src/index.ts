@@ -13,6 +13,7 @@ import { ProductDetail } from './models/ProductDetail';
 import { Operator } from './models/Operator';
 import { Crop } from './models/Crop';
 import { Variety } from './models/Variety';
+import { Product } from './models/Product';
 
 dotenv.config({ path: '.env' });
 
@@ -45,7 +46,7 @@ app.get('/api/orders', async (req, res) => {
   try {
     const orders = await AppDataSource.getRepository(Order).find({ 
       where: { status: Not('archived') },
-      relations: ['productDetails', 'operator'] // Include ProductDetails and Operator relationships
+      relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
     });
     res.json(orders);
   } catch (error) {
@@ -58,7 +59,7 @@ app.get('/api/orders/archived', async (req, res) => {
   try {
     const archivedOrders = await AppDataSource.getRepository(Order).find({ 
       where: { status: 'archived' },
-      relations: ['productDetails', 'operator'] // Include ProductDetails relationship
+      relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
     });
     res.json(archivedOrders);
   } catch (error) {
@@ -78,12 +79,20 @@ app.post('/api/orders', async (req, res) => {
     if (!operator || !crop || !variety) {
       res.status(400).json({ error: 'Invalid operator, crop, or variety ID' , message: 'Invalid operator, crop, or variety ID' });
     } else {
+      const productDetailsWithProduct = await Promise.all(productDetails.map(async (detail: any) => {
+        const product = await AppDataSource.getRepository(Product).findOneBy({ id: detail.productId });
+        if (!product) {
+          throw new Error(`Invalid product ID: ${detail.productId}`);
+        }
+        return { ...detail, product };
+      }));
+
       const orders = AppDataSource.getRepository(Order).create({
         ...orderData,
         operator,
         crop,
         variety,
-        productDetails
+        productDetails: productDetailsWithProduct
       });
   
       logger.debug('Order Data:', orders);
@@ -255,6 +264,43 @@ app.delete('/api/crops/:cropId/varieties/:varietyId', async (req, res) => {
   } catch (error) {
     logger.error('Failed to delete variety:', error);
     res.status(500).json({ error: 'Failed to delete variety' });
+  }
+});
+
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await AppDataSource.getRepository(Product).find();
+    res.json(products);
+  } catch (error) {
+    logger.error('Failed to fetch products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+app.post('/api/products', async (req, res) => {
+  try {
+    const product = AppDataSource.getRepository(Product).create(req.body);
+    const savedProduct = await AppDataSource.getRepository(Product).save(product);
+    res.status(201).json(savedProduct);
+  } catch (error) {
+    logger.error('Failed to create product:', error);
+    res.status(500).json({ error: 'Failed to create product' });
+  }
+});
+
+app.delete('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await AppDataSource.getRepository(Product).findOneBy({ id });
+    if (product) {
+      await AppDataSource.getRepository(Product).remove(product);
+      res.json({ message: 'Product deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Product not found' });
+    }
+  } catch (error) {
+    logger.error('Failed to delete product:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
   }
 });
 
