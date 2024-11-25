@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { AppDataSource } from './database';
@@ -69,23 +69,31 @@ app.get('/api/orders/archived', async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
-    const { productDetails, operator, crop, variety, ...orderData } = req.body;
-    
-    const orders = AppDataSource.getRepository(Order).create({
-      ...orderData,
-      operator,
-      crop,
-      variety,
-      productDetails
-    });
+    const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
 
-    logger.debug('Order Data:', orders);
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
+    const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
+    const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId });
 
-    const savedOrders = await AppDataSource.getRepository(Order).save(orders);
-
-    logger.debug('Saved Order:', savedOrders);
-
-    res.status(201).json(savedOrders);
+    if (!operator || !crop || !variety) {
+      res.status(400).json({ error: 'Invalid operator, crop, or variety ID' , message: 'Invalid operator, crop, or variety ID' });
+    } else {
+      const orders = AppDataSource.getRepository(Order).create({
+        ...orderData,
+        operator,
+        crop,
+        variety,
+        productDetails
+      });
+  
+      logger.debug('Order Data:', orders);
+  
+      const savedOrders = await AppDataSource.getRepository(Order).save(orders);
+  
+      logger.debug('Saved Order:', savedOrders);
+  
+      res.status(201).json(savedOrders); 
+    }
   } catch (error) {
     logger.error('Failed to create order:', error);
     res.status(500).json({ error: 'Failed to create order', message: error });
