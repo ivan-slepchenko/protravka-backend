@@ -14,7 +14,8 @@ import { Crop } from './models/Crop';
 import { Variety } from './models/Variety';
 import { Product } from './models/Product';
 import cookieParser from 'cookie-parser';
-import { registerUser, loginUser } from './controllers/firebaseAuth';
+import { registerUser, loginUser, logoutUser, resetPassword } from './controllers/firebaseAuth';
+import { verifyToken } from './middleware';
 
 dotenv.config({ path: '.env' });
 
@@ -44,7 +45,7 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.send(`Hello World! Version: ${version}`);
 });
-app.get('/api/orders', async (req, res) => {
+app.get('/api/orders', verifyToken, async (req, res) => {
   try {
     const orders = await AppDataSource.getRepository(Order).find({ 
       where: { status: Not('archived') },
@@ -57,7 +58,7 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-app.get('/api/orders/archived', async (req, res) => {
+app.get('/api/orders/archived', verifyToken, async (req, res) => {
   try {
     const archivedOrders = await AppDataSource.getRepository(Order).find({ 
       where: { status: 'archived' },
@@ -70,7 +71,7 @@ app.get('/api/orders/archived', async (req, res) => {
   }
 });
 
-app.post('/api/orders', async (req, res) => {
+app.post('/api/orders', verifyToken, async (req, res) => {
   try {
     const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
 
@@ -111,7 +112,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.put('/api/orders/:id/status', async (req, res) => {
+app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -129,7 +130,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
   }
 });
 
-app.delete('/api/orders/:id', async (req, res) => {
+app.delete('/api/orders/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const order = await AppDataSource.getRepository(Order).findOneBy({ id });
@@ -145,7 +146,7 @@ app.delete('/api/orders/:id', async (req, res) => {
   }
 });
 
-app.get('/api/operators', async (req, res) => {
+app.get('/api/operators', verifyToken, async (req, res) => {
   try {
     const operators = await AppDataSource.getRepository(Operator).find();
     res.json(operators);
@@ -155,7 +156,7 @@ app.get('/api/operators', async (req, res) => {
   }
 });
 
-app.post('/api/operators', async (req, res) => {
+app.post('/api/operators', verifyToken, async (req, res) => {
   try {
     const operator = AppDataSource.getRepository(Operator).create(req.body);
     const savedOperator = await AppDataSource.getRepository(Operator).save(operator);
@@ -166,7 +167,7 @@ app.post('/api/operators', async (req, res) => {
   }
 });
 
-app.put('/api/operators/:id', async (req, res) => {
+app.put('/api/operators/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
@@ -183,7 +184,7 @@ app.put('/api/operators/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/operators/:id', async (req, res) => {
+app.delete('/api/operators/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
@@ -199,7 +200,7 @@ app.delete('/api/operators/:id', async (req, res) => {
   }
 });
 
-app.get('/api/crops', async (req, res) => {
+app.get('/api/crops', verifyToken, async (req, res) => {
   try {
     const crops = await AppDataSource.getRepository(Crop).find({ relations: ['varieties'] });
     res.json(crops);
@@ -209,7 +210,7 @@ app.get('/api/crops', async (req, res) => {
   }
 });
 
-app.post('/api/crops', async (req, res) => {
+app.post('/api/crops', verifyToken, async (req, res) => {
   try {
     const crop = AppDataSource.getRepository(Crop).create(req.body);
     const savedCrop = await AppDataSource.getRepository(Crop).save(crop);
@@ -220,7 +221,7 @@ app.post('/api/crops', async (req, res) => {
   }
 });
 
-app.post('/api/crops/:cropId/varieties', async (req, res) => {
+app.post('/api/crops/:cropId/varieties', verifyToken, async (req, res) => {
   try {
     const { cropId } = req.params;
     const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
@@ -237,7 +238,7 @@ app.post('/api/crops/:cropId/varieties', async (req, res) => {
   }
 });
 
-app.delete('/api/crops/:id', async (req, res) => {
+app.delete('/api/crops/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const crop = await AppDataSource.getRepository(Crop).findOne({ where: { id }, relations: ['varieties'] });
@@ -253,7 +254,7 @@ app.delete('/api/crops/:id', async (req, res) => {
   }
 });
 
-app.delete('/api/crops/:cropId/varieties/:varietyId', async (req, res) => {
+app.delete('/api/crops/:cropId/varieties/:varietyId', verifyToken, async (req, res) => {
   try {
     const { cropId, varietyId } = req.params;
     const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId, crop: { id: cropId } });
@@ -269,7 +270,7 @@ app.delete('/api/crops/:cropId/varieties/:varietyId', async (req, res) => {
   }
 });
 
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', verifyToken, async (req, res) => {
   try {
     const products = await AppDataSource.getRepository(Product).find();
     res.json(products);
@@ -279,7 +280,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/products', async (req, res) => {
+app.post('/api/products', verifyToken, async (req, res) => {
   try {
     const product = AppDataSource.getRepository(Product).create(req.body);
     const savedProduct = await AppDataSource.getRepository(Product).save(product);
@@ -290,7 +291,7 @@ app.post('/api/products', async (req, res) => {
   }
 });
 
-app.delete('/api/products/:id', async (req, res) => {
+app.delete('/api/products/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const product = await AppDataSource.getRepository(Product).findOneBy({ id });
@@ -319,6 +320,8 @@ app.get('/api/logs', (req, res) => {
 
 app.post('/api/register', registerUser);
 app.post('/api/login', loginUser);
+app.post('/api/logout', logoutUser);
+app.post('/api/reset-password', resetPassword);
 
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);

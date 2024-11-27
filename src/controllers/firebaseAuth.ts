@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 
 export const auth = getAuth();
 
@@ -44,6 +44,34 @@ export const loginUser = async (req: Request, res: Response) => {
       } catch (error) {
         const errorMessage = (error as Error).message || "An error occurred while logging in";
         res.status(500).json({ error: errorMessage });
+      }
+  }
+};
+
+export const logoutUser = async (req: Request, res: Response) => {
+  try {
+    await signOut(auth);
+    res.clearCookie('access_token');
+    res.status(200).json({ message: "User logged out successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(422).json({
+      email: "Email is required"
+    });
+  } else {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        res.status(200).json({ message: "Password reset email sent successfully!" });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
       }
   }
 };
