@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, BeforeRemove } from 'typeorm';
 import { Variety } from './Variety';
-import { AppDataSource } from '../database';
+import { AppDataSource } from '..';
 
 @Entity()
 export class Crop {

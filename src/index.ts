@@ -1,7 +1,6 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { AppDataSource } from './database';
 import { Order } from './models/Order';
 import "reflect-metadata"
 import { Not } from 'typeorm';
@@ -16,8 +15,25 @@ import { Product } from './models/Product';
 import cookieParser from 'cookie-parser';
 import { registerUser, loginUser, logoutUser, resetPassword } from './controllers/firebaseAuth';
 import { verifyToken } from './middleware';
+import { DataSource } from 'typeorm';
+import { ProductDetail } from './models/ProductDetail';
+import { User } from './models/User';
 
 dotenv.config({ path: '.env' });
+
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT!),
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  migrations: ['dist/migrations/*.js'],
+  migrationsTableName: 'migrations',
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, User], // Add User entity
+  synchronize: true,
+});
+
 
 log4js.configure({
   appenders: {
@@ -33,7 +49,12 @@ logger.level = 'debug';
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); // Enable CORS for all routes
+const corsOptions = {
+    origin: 'http://localhost:3000', // Allow only this origin
+    credentials: true, // Allow credentials
+};
+  
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser())
 

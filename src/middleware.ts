@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { adminApp } from "./config/firebase";
+import { firebaseAdminApp } from "./config/firebase";
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -13,7 +13,7 @@ export const verifyToken = async (req: Request, res: Response, next: NextFunctio
     res.status(403).json({ error: 'No token provided' });
   } else {
     try {
-        const decodedToken = await adminApp.auth().verifyIdToken(idToken);
+        const decodedToken = await firebaseAdminApp.auth().verifyIdToken(idToken);
         req.user = decodedToken;
         next();
       } catch (error) {
