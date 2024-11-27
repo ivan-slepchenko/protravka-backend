@@ -1,5 +1,4 @@
 import { DataSource } from 'typeorm';
-import dotenv from 'dotenv';
 import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
 import log4js from 'log4js';
@@ -7,8 +6,9 @@ import { Operator } from './models/Operator';
 import { Crop } from './models/Crop';
 import { Variety } from './models/Variety';
 import { Product } from './models/Product';
+import { User } from './models/User';
 
-dotenv.config();
+
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -19,6 +19,6 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product],
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, User], // Add User entity
   synchronize: true,
 });

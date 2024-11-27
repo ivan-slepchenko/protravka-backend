@@ -9,11 +9,12 @@ import log4js from 'log4js';
 import fs from 'fs';
 import path from 'path';
 import { version } from '../package.json';
-import { ProductDetail } from './models/ProductDetail';
 import { Operator } from './models/Operator';
 import { Crop } from './models/Crop';
 import { Variety } from './models/Variety';
 import { Product } from './models/Product';
+import cookieParser from 'cookie-parser';
+import { registerUser, loginUser } from './controllers/firebaseAuth';
 
 dotenv.config({ path: '.env' });
 
@@ -33,6 +34,7 @@ const port = process.env.PORT || 3000;
 
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json());
+app.use(cookieParser())
 
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
@@ -314,6 +316,9 @@ app.get('/api/logs', (req, res) => {
     res.type('text/plain').send(data);
   });
 });
+
+app.post('/api/register', registerUser);
+app.post('/api/login', loginUser);
 
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
