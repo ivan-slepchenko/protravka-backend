@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
+import {getAuth as getAdminAuth} from 'firebase-admin/auth';
 
 export const registerUser =  async (req: Request, res: Response) => {
   const { email, password } = req.body;

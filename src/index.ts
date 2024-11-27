@@ -343,6 +343,15 @@ app.post('/api/register', registerUser);
 app.post('/api/login', loginUser);
 app.post('/api/logout', logoutUser);
 app.post('/api/reset-password', resetPassword);
+app.get('/api/user', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    res.status(200).json(user);
+  } catch (error) {
+    logger.error('Failed to fetch user:', error);
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
 
 app.listen(port, () => {
   logger.info(`Server is running on port ${port}`);
