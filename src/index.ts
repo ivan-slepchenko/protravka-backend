@@ -50,8 +50,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const corsOptions = {
-    origin: 'http://localhost:3000', // Allow only this origin
-    credentials: true, // Allow credentials
+  origin: [/^http:\/\/localhost(:\d+)?$/, /\.azurecontainerapps\.io$/], // Allow localhost and any subdomain and port from azurecontainerapps.io
+  credentials: true, // Allow credentials
 };
   
 app.use(cors(corsOptions));
