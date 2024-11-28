@@ -17,7 +17,6 @@ import { registerUser, loginUser, logoutUser, resetPassword } from './controller
 import { verifyToken } from './middleware';
 import { DataSource } from 'typeorm';
 import { ProductDetail } from './models/ProductDetail';
-import { User } from './models/User';
 
 dotenv.config({ path: '.env' });
 
@@ -30,7 +29,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, User], // Add User entity
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product], // Ensure Operator entity is included
   synchronize: true,
 });
 

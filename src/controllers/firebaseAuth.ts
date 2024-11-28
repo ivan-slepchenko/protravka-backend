@@ -1,19 +1,34 @@
 import { Request, Response } from 'express';
 import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
-import {getAuth as getAdminAuth} from 'firebase-admin/auth';
+import { AppDataSource } from '../index';
+import { Operator } from '../models/Operator';
 
 export const registerUser =  async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, name, surname, birthday, phone } = req.body;
   const auth = getAuth();
-  if (!email || !password) {
+  if (!email || !password || !name || !surname || !birthday || !phone) {
       res.status(422).json({
           email: "Email is required",
           password: "Password is required",
+          name: "Name is required",
+          surname: "Surname is required",
+          birthday: "Birthday is required",
+          phone: "Phone number is required",
       });
   } else {
       try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
           await sendEmailVerification(auth.currentUser!);
+
+          const operator = AppDataSource.getRepository(Operator).create({
+            email,
+            name,
+            surname,
+            birthday,
+            phone,
+          });
+          await AppDataSource.getRepository(Operator).save(operator);
+
           res.status(201).json({ message: "Verification email sent! User created successfully!" });
       } catch (error) {
           const errorMessage = (error as Error).message || "An error occurred while registering user";

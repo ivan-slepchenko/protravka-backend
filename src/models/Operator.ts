@@ -1,4 +1,3 @@
-
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
@@ -11,4 +10,13 @@ export class Operator {
 
   @Column()
   surname!: string;
+
+  @Column()
+  email!: string;
+
+  @Column()
+  birthday!: string;
+
+  @Column()
+  phone!: string;
 }
