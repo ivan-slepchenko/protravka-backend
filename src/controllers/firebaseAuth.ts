@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { createUserWithEmailAndPassword, getAuth, sendEmailVerification, signInWithEmailAndPassword, signOut, sendPasswordResetEmail } from 'firebase/auth';
 import { AppDataSource } from '../index';
-import { Operator } from '../models/Operator';
+import { Operator, Role } from '../models/Operator';
 
 export const registerUser =  async (req: Request, res: Response) => {
   const { email, password, name, surname, birthday, phone } = req.body;
@@ -26,6 +26,8 @@ export const registerUser =  async (req: Request, res: Response) => {
             surname,
             birthday,
             phone,
+            firebaseUserId: userCredential.user.uid, // Store firebaseUserId
+            roles: [Role.OPERATOR], // Assign operator role by default
           });
           await AppDataSource.getRepository(Operator).save(operator);
 
