@@ -345,7 +345,18 @@ app.post('/api/reset-password', resetPassword);
 app.get('/api/user', verifyToken, async (req, res) => {
   try {
     const user = req.user;
-    res.status(200).json(user);
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
+    if (operator) {
+      res.status(200).json({
+        email: operator.email,
+        name: operator.name,
+        surname: operator.surname,
+        phone: operator.phone,
+        roles: operator.roles,
+      });
+    } else {
+      res.status(404).json({ error: 'Operator not found' });
+    }
   } catch (error) {
     logger.error('Failed to fetch user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });

@@ -49,20 +49,34 @@ export const loginUser = async (req: Request, res: Response) => {
     });
   } else {
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const idToken = userCredential.user.getIdToken();
-        if (idToken) {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = userCredential.user.getIdToken();
+      if (idToken) {
+        const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: userCredential.user.uid });
+        if (operator) {
           res.cookie('access_token', await idToken, {
             httpOnly: true
           });
-          res.status(200).json({ message: "User logged in successfully", userCredential });
+          res.status(200).json({
+            message: "User logged in successfully",
+            user: {
+              email: operator.email,
+              name: operator.name,
+              surname: operator.surname,
+              phone: operator.phone,
+              roles: operator.roles,
+            },
+          });
         } else {
-          res.status(500).json({ error: "Internal Server Error" });
+          res.status(404).json({ error: "Operator not found" });
         }
-      } catch (error) {
-        const errorMessage = (error as Error).message || "An error occurred while logging in";
-        res.status(500).json({ error: errorMessage });
+      } else {
+        res.status(500).json({ error: "Internal Server Error" });
       }
+    } catch (error) {
+      const errorMessage = (error as Error).message || "An error occurred while logging in";
+      res.status(500).json({ error: errorMessage });
+    }
   }
 };
 
@@ -71,6 +85,7 @@ export const logoutUser = async (req: Request, res: Response) => {
     try {
     await signOut(auth);
     res.clearCookie('access_token');
+    res.clearCookie('user_token'); // Clear user_token cookie
     res.status(200).json({ message: "User logged out successfully" });
   } catch (error) {
     console.error(error);
