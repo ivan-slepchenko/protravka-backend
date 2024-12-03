@@ -1,8 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, OneToOne } from 'typeorm';
 import { ProductDetail } from './ProductDetail';
 import { Operator } from './Operator';
 import { Crop } from './Crop';
 import { Variety } from './Variety';
+import { OrderExecution } from './OrderExecution';
+
+export enum OrderStatus {
+  NotStarted = 'Not Started',
+  InProgress = 'In Progress',
+  Acknowledge = 'Acknowledge',
+  Archived = 'Archived',
+  Executed = "Executed",
+}
 
 @Entity()
 export class Order {
@@ -12,8 +21,12 @@ export class Order {
   @Column()
   lotNumber!: string;
 
-  @Column()
-  status!: string;
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.NotStarted,
+  })
+  status!: OrderStatus;
 
   @Column()
   recipeDate!: string;
@@ -44,4 +57,7 @@ export class Order {
 
   @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
   productDetails!: ProductDetail[];
+
+  @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true })
+  orderExecution!: OrderExecution;
 }

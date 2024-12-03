@@ -1,4 +1,3 @@
-
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
@@ -8,4 +7,10 @@ export class Product {
 
   @Column()
   name!: string;
+
+  @Column({ nullable: true })
+  activeIngredient?: string;
+
+  @Column('float')
+  density!: number;
 }

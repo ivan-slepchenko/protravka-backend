@@ -1,7 +1,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import { Order } from './models/Order';
+import { Order, OrderStatus } from './models/Order';
 import "reflect-metadata"
 import { Not } from 'typeorm';
 import log4js from 'log4js';
@@ -17,6 +17,8 @@ import { registerUser, loginUser, logoutUser, resetPassword } from './controller
 import { verifyToken } from './middleware';
 import { DataSource } from 'typeorm';
 import { ProductDetail } from './models/ProductDetail';
+import { OrderExecution } from './models/OrderExecution';
+import { ProductExecution } from './models/ProductExecution';
 
 dotenv.config({ path: '.env' });
 
@@ -29,7 +31,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product], // Ensure Operator entity is included
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution], // Ensure Operator entity is included
   synchronize: true,
 });
 
@@ -68,7 +70,7 @@ app.get('/', (req, res) => {
 app.get('/api/orders', verifyToken, async (req, res) => {
   try {
     const orders = await AppDataSource.getRepository(Order).find({ 
-      where: { status: Not('archived') },
+      where: { status: Not(OrderStatus.Archived) },
       relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
     });
     res.json(orders);
@@ -81,7 +83,7 @@ app.get('/api/orders', verifyToken, async (req, res) => {
 app.get('/api/orders/archived', verifyToken, async (req, res) => {
   try {
     const archivedOrders = await AppDataSource.getRepository(Order).find({ 
-      where: { status: 'archived' },
+      where: { status: OrderStatus.Archived },
       relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
     });
     res.json(archivedOrders);
@@ -302,9 +304,14 @@ app.get('/api/products', verifyToken, async (req, res) => {
 
 app.post('/api/products', verifyToken, async (req, res) => {
   try {
-    const product = AppDataSource.getRepository(Product).create(req.body);
-    const savedProduct = await AppDataSource.getRepository(Product).save(product);
-    res.status(201).json(savedProduct);
+    const { name, density, activeIngredient } = req.body;
+    if (!name || !density) {
+        res.status(400).json({ error: 'Name and density are required' });
+    } else {
+        const product = AppDataSource.getRepository(Product).create({ name, density, activeIngredient });
+        const savedProduct = await AppDataSource.getRepository(Product).save(product);
+        res.status(201).json(savedProduct);
+    }
   } catch (error) {
     logger.error('Failed to create product:', error);
     res.status(500).json({ error: 'Failed to create product' });
@@ -360,6 +367,67 @@ app.get('/api/user', verifyToken, async (req, res) => {
   } catch (error) {
     logger.error('Failed to fetch user:', error);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+interface OrderExecutionRequestBody {
+  orderId: string;
+  productExecutions: {
+    productId: string;
+    appliedQuantity?: number;
+    applicationPhoto?: string;
+    consumptionPhoto?: string;
+  }[];
+  applicationMethod?: string;
+  packingPhoto?: string;
+  consumptionPhoto?: string;
+  packedQuantity?: number;
+}
+
+app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
+  try {
+    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedQuantity } = req.body;
+    const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
+
+    if (!order) {
+      res.status(400).json({ error: 'Invalid order ID' });
+    } else {
+      let orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+        where: { order: { id: orderId } },
+        relations: ['productExecutions'],
+      });
+
+      if (orderExecution) {
+        // Update existing order execution
+        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedQuantity });
+        // Update or add product executions
+        for (const productExecutionData of productExecutions) {
+          let productExecution = orderExecution.productExecutions.find(pe => pe.productId === productExecutionData.productId);
+          if (productExecution) {
+            Object.assign(productExecution, productExecutionData);
+          } else {
+            productExecution = AppDataSource.getRepository(ProductExecution).create(productExecutionData);
+            orderExecution.productExecutions.push(productExecution);
+          }
+        }
+      } else {
+        // Create new order execution
+        orderExecution = AppDataSource.getRepository(OrderExecution).create({
+          order,
+          productExecutions,
+          applicationMethod,
+          packingPhoto,
+          consumptionPhoto,
+          packedQuantity,
+        });
+      }
+
+      const savedOrderExecution = await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+      res.status(201).json(savedOrderExecution);
+    }
+  } catch (error) {
+    logger.error('Failed to create or update order execution:', error);
+    res.status(500).json({ error: 'Failed to create or update order execution' });
   }
 });
 
