@@ -46,6 +46,10 @@ export class Order {
   @Column('float')
   tkw!: number;
 
+/**
+ * The quantity of the order in kilograms.
+ * In the spreadsheet, it is the cell "O6".
+ */
   @Column('float')
   quantity!: number;
 

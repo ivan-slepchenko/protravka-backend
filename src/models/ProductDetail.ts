@@ -2,33 +2,50 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Order } from './Order';
 import { Product } from './Product';
 
+export enum RateUnit {
+    ML = 'ml',
+    G = 'g',
+}
+  
+export enum RateType {
+    Unit = 'unit',
+    Per100Kg = '100kg',
+}
+  
+
 @Entity()
 export class ProductDetail {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-  @ManyToOne(() => Order, (order) => order.productDetails)
-  order!: Order;
+    @ManyToOne(() => Order, (order) => order.productDetails)
+    order!: Order;
 
-  @ManyToOne(() => Product)
-  product!: Product;
+    @ManyToOne(() => Product)
+    product!: Product;
 
-  @Column('float')
-  quantity!: number;
+    @Column('float')
+    quantity!: number;
 
-  @Column()
-  rateUnit!: string;
+    @Column({
+        type: 'enum',
+        enum: RateUnit,
+    })
+    rateUnit!: RateUnit;
 
-  @Column()
-  rateType!: string;
+    @Column({
+        type: 'enum',
+        enum: RateType,
+    })
+    rateType!: RateType;
 
-  @Column('float')
-  density!: number;
+    @Column('float')
+    density!: number;
 
-  @Column('float')
-  rate!: number;
+    @Column('float')
+    rate!: number;
 
-  @Column('int')
-  index!: number; // Add index column
+    @Column('int')
+    index!: number; // Add index column
 
 }
