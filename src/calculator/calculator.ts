@@ -1,4 +1,4 @@
-import { Order } from "../models/Order";
+import { ExtraSlurryUnit, Order } from "../models/Order";
 import { ProductDetail, RateType, RateUnit } from "../models/ProductDetail";
 
 export interface ProductRecipe {
@@ -9,27 +9,25 @@ export interface ProductRecipe {
     rateGTo100Kg: number;
     literSlurryRecipeToMix: number;
     kgSlurryRecipeToWeight: number;
-    extraSlurryPipesAndPompFeeding: number;
 }
 
 export interface OrderRecipe {
     order: Order;
-    totalCompoundsDensity: number; //I22/H22
-    slurryTotalMltoU_KS: number; //SUM(H17:H21)
-    slurryTotalGToU_KS: number; //SUM(I17:I21)
-    slurryTotalMlTo100g: number; //SUM(K17:K21)
-    slurryTotalGTo100Kgs: number; //SUM(L17:L21)
-    slurryTotalLiterRecipeToMix: number; //SUM(M17:M21)
-    slurryTotalKgRecipeToWeight: number; //SUM(N17:N21)
-
-    nbSeedsUnits: number; //O6/I15
-
+    totalCompoundsDensity: number;
+    slurryTotalMltoU_KS: number;
+    slurryTotalGToU_KS: number;
+    slurryTotalMlTo100g: number;
+    slurryTotalGTo100Kgs: number;
+    slurryTotalMlRecipeToMix: number;
+    slurryTotalKgRecipeToWeight: number;
+    extraSlurryPipesAndPompFeedingMl: number;
+    nbSeedsUnits: number;
     productRecipes: ProductRecipe[];
 }
 
 export const calculateRecipe = (order: Order): OrderRecipe => {
+    const unitWeight = order.bagSize * order.tkw / 1000;
     const productRecipes: ProductRecipe[] = order.productDetails.map((productDetail) => {
-        const unitWeight = order.bagSize * order.tkw / 1000;
 
         let rateMltoU_KS = 0;
         let rateGToU_KS = 0;
@@ -77,13 +75,10 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
                 throw new Error('Unknown rate unit');
         }
 
-        let extraSlurryNeeded = 0;
-
-        let seedSlurryToPrepare = order.quantity + order.quantity * 0;
-
-        let literSlurryRecipeToMix = rateMlTo100Kg * seedSlurryToPrepare / 100;
-        let kgSlurryRecipeToWeight = 0; //N17*F17
-        let extraSlurryPipesAndPompFeeding = 0; //(N22*O10)
+        
+        let seedsSlurryToPrepareKg = order.extraSlurry * order.quantity;
+        let literSlurryRecipeToMix = rateMlTo100Kg * seedsSlurryToPrepareKg / 100;
+        let kgSlurryRecipeToWeight = literSlurryRecipeToMix * productDetail.product.density;
 
         return {
             productDetail,
@@ -93,20 +88,31 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
             rateGTo100Kg,
             literSlurryRecipeToMix,
             kgSlurryRecipeToWeight,
-            extraSlurryPipesAndPompFeeding,
         };
     });
 
+
+    const slurryTotalMltoU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateMltoU_KS, 0);
+    const slurryTotalGToU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateGToU_KS, 0);
+    const slurryTotalMlTo100g = productRecipes.reduce((sum, recipe) => sum + recipe.rateMlTo100Kg, 0);
+    const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
+    const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
+    const slurryTotalKgRecipeToWeight = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToWeight, 0);
+    let extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry;
+    let totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
+    let nbSeedsUnits = order.quantity / unitWeight;
+
     return {
         order,
-        totalCompoundsDensity: 0,
-        slurryTotalMltoU_KS: 0,
-        slurryTotalGToU_KS: 0,
-        slurryTotalMlTo100g: 0,
-        slurryTotalGTo100Kgs: 0,
-        slurryTotalLiterRecipeToMix: 0,
-        slurryTotalKgRecipeToWeight: 0,
-        nbSeedsUnits: 0,
+        totalCompoundsDensity,
+        slurryTotalMltoU_KS,
+        slurryTotalGToU_KS,
+        slurryTotalMlTo100g,
+        slurryTotalGTo100Kgs,
+        slurryTotalMlRecipeToMix,
+        slurryTotalKgRecipeToWeight,
+        extraSlurryPipesAndPompFeedingMl,
+        nbSeedsUnits,
         productRecipes,
     };
 };

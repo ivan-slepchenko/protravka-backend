@@ -13,55 +13,62 @@ export enum OrderStatus {
   Executed = "Executed",
 }
 
+export enum ExtraSlurryUnit {
+    KG = 'kg',
+    PERCENT = '%', //0-1
+}
 @Entity()
 export class Order {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-  @Column()
-  lotNumber!: string;
+    @Column()
+    lotNumber!: string;
 
-  @Column({
-    type: 'enum',
-    enum: OrderStatus,
-    default: OrderStatus.NotStarted,
-  })
-  status!: OrderStatus;
+    @Column({
+        type: 'enum',
+        enum: OrderStatus,
+        default: OrderStatus.NotStarted,
+    })
+    status!: OrderStatus;
 
-  @Column()
-  recipeDate!: string;
+    @Column()
+    recipeDate!: string;
 
-  @Column()
-  applicationDate!: string;
+    @Column()
+    applicationDate!: string;
 
-  @ManyToOne(() => Operator, { eager: true })
-  operator!: Operator;
+    @ManyToOne(() => Operator, { eager: true })
+    operator!: Operator;
 
-  @ManyToOne(() => Crop, { eager: true })
-  crop!: Crop;
+    @ManyToOne(() => Crop, { eager: true })
+    crop!: Crop;
 
-  @ManyToOne(() => Variety, { eager: true })
-  variety!: Variety;
+    @ManyToOne(() => Variety, { eager: true })
+    variety!: Variety;
 
-  @Column('float')
-  tkw!: number;
+    @Column('float')
+    tkw!: number;
 
-/**
- * The quantity of the order in kilograms.
- * In the spreadsheet, it is the cell "O6".
- */
-  @Column('float')
-  quantity!: number;
+    /**
+     * The quantity of the order in kilograms.
+     * In the spreadsheet, it is the cell "O6".
+     */
+    @Column('float')
+    quantity!: number;
 
-  @Column()
-  packaging!: string;
+    @Column('float')
+    extraSlurry!: number;
 
-  @Column('float')
-  bagSize!: number;
+    @Column()
+    packaging!: string;
 
-  @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
-  productDetails!: ProductDetail[];
+    @Column('float')
+    bagSize!: number;
 
-  @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true })
-  orderExecution!: OrderExecution;
+    @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
+    productDetails!: ProductDetail[];
+
+    @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true })
+    orderExecution!: OrderExecution;
 }
