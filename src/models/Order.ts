@@ -4,6 +4,7 @@ import { Operator } from './Operator';
 import { Crop } from './Crop';
 import { Variety } from './Variety';
 import { OrderExecution } from './OrderExecution';
+import { OrderRecipe } from './OrderRecipe';
 
 export enum OrderStatus {
   NotStarted = 'Not Started',
@@ -67,4 +68,7 @@ export class Order {
 
     @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true })
     orderExecution!: OrderExecution;
+
+    @OneToOne(() => OrderRecipe, (orderRecipe) => orderRecipe.order, { cascade: true })
+    orderRecipe!: OrderRecipe;
 }

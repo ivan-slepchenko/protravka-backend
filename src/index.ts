@@ -19,14 +19,15 @@ import { DataSource } from 'typeorm';
 import { ProductDetail } from './models/ProductDetail';
 import { OrderExecution } from './models/OrderExecution';
 import { ProductExecution } from './models/ProductExecution';
+import { OrderRecipe } from './models/OrderRecipe';
+import { ProductRecipe } from './models/ProductRecipe';
+import { createOrderRecipe } from './calculator/calculator';
 
 dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT!),
-  username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
@@ -112,17 +113,20 @@ app.post('/api/orders', verifyToken, async (req, res) => {
         return { ...detail, product };
       }));
 
-      const orders = AppDataSource.getRepository(Order).create({
+      const order = AppDataSource.getRepository(Order).create({
         ...orderData,
         operator,
         crop,
         variety,
         productDetails: productDetailsWithProduct
-      });
+      })[0];
+
+      const orderRecipe = createOrderRecipe(order);
+      order.orderRecipe = orderRecipe;
   
-      logger.debug('Order Data:', orders);
+      logger.debug('Order Data:', order);
   
-      const savedOrders = await AppDataSource.getRepository(Order).save(orders);
+      const savedOrders = await AppDataSource.getRepository(Order).save(order);
   
       logger.debug('Saved Order:', savedOrders);
   
@@ -439,7 +443,9 @@ app.listen(port, () => {
   logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
   logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
 
+    .catch((err: any) => logger.error('Unable to connect to the database:', err));
   AppDataSource.initialize()
     .then(() => logger.info('Database connected'))
     .catch((err: any) => logger.error('Unable to connect to the database:', err));
+});
 });

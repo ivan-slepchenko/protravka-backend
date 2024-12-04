@@ -1,31 +1,10 @@
 import { Order } from "../models/Order";
-import { ProductDetail, RateType, RateUnit } from "../models/ProductDetail";
+import { RateType, RateUnit } from "../models/ProductDetail";
+import { OrderRecipe } from "../models/OrderRecipe";
+import { ProductRecipe } from "../models/ProductRecipe";
+import { AppDataSource } from "../index"; // Import the data source
 
-export interface ProductRecipe {
-    productDetail: ProductDetail;
-    rateMltoU_KS: number;
-    rateGToU_KS: number;
-    rateMlTo100Kg: number;
-    rateGTo100Kg: number;
-    literSlurryRecipeToMix: number;
-    kgSlurryRecipeToWeight: number;
-}
-
-export interface OrderRecipe {
-    order: Order;
-    totalCompoundsDensity: number;
-    slurryTotalMltoU_KS: number;
-    slurryTotalGToU_KS: number;
-    slurryTotalMlTo100g: number;
-    slurryTotalGTo100Kgs: number;
-    slurryTotalMlRecipeToMix: number;
-    slurryTotalKgRecipeToWeight: number;
-    extraSlurryPipesAndPompFeedingMl: number;
-    nbSeedsUnits: number;
-    productRecipes: ProductRecipe[];
-}
-
-export const calculateRecipe = (order: Order): OrderRecipe => {
+export const createOrderRecipe = (order: Order): OrderRecipe => {
     const unitWeight = order.bagSize * order.tkw / 1000;
     const productRecipes: ProductRecipe[] = order.productDetails.map((productDetail) => {
 
@@ -80,7 +59,7 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
         let literSlurryRecipeToMix = rateMlTo100Kg * seedsSlurryToPrepareKg / 100;
         let kgSlurryRecipeToWeight = literSlurryRecipeToMix * productDetail.product.density;
 
-        return {
+        return AppDataSource.getRepository(ProductRecipe).create({
             productDetail,
             rateMltoU_KS,
             rateGToU_KS,
@@ -88,7 +67,7 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
             rateGTo100Kg,
             literSlurryRecipeToMix,
             kgSlurryRecipeToWeight,
-        };
+        });
     });
 
 
@@ -102,7 +81,7 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
     let totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
     let nbSeedsUnits = order.quantity / unitWeight;
 
-    return {
+    return AppDataSource.getRepository(OrderRecipe).create({
         order,
         totalCompoundsDensity,
         slurryTotalMltoU_KS,
@@ -114,5 +93,5 @@ export const calculateRecipe = (order: Order): OrderRecipe => {
         extraSlurryPipesAndPompFeedingMl,
         nbSeedsUnits,
         productRecipes,
-    };
+    });
 };
