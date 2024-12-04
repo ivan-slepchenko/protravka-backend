@@ -54,6 +54,9 @@ export class Order {
     @Column('float')
     quantity!: number;
 
+    /**
+     * The extra slurry in percentage, 0-100.
+     */
     @Column('float')
     extraSlurry!: number;
 
