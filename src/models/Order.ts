@@ -51,12 +51,10 @@ export class Order {
      * The quantity of the order in kilograms.
      * In the spreadsheet, it is the cell "O6".
      */
-    @Column('float')
+
+        @Column('float')
     quantity!: number;
 
-    /**
-     * The extra slurry in percentage, 0-100.
-     */
     @Column('float')
     extraSlurry!: number;
 

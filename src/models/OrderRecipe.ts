@@ -1,5 +1,4 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, OneToMany, JoinColumn } from 'typeorm';
 import { Order } from './Order';
 import { ProductRecipe } from './ProductRecipe';
 
@@ -9,6 +8,7 @@ export class OrderRecipe {
     id!: string;
 
     @OneToOne(() => Order, (order) => order.orderRecipe)
+    @JoinColumn() // Specify that OrderRecipe owns the relationship with Order
     order!: Order;
 
     @Column('float')
