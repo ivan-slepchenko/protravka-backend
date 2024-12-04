@@ -1,4 +1,4 @@
-import { ExtraSlurryUnit, Order } from "../models/Order";
+import { Order } from "../models/Order";
 import { ProductDetail, RateType, RateUnit } from "../models/ProductDetail";
 
 export interface ProductRecipe {

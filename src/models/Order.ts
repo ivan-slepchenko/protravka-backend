@@ -13,10 +13,6 @@ export enum OrderStatus {
   Executed = "Executed",
 }
 
-export enum ExtraSlurryUnit {
-    KG = 'kg',
-    PERCENT = '%', //0-1
-}
 @Entity()
 export class Order {
     @PrimaryGeneratedColumn('uuid')
