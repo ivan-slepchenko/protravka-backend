@@ -74,7 +74,14 @@ app.get('/api/orders', verifyToken, async (req, res) => {
   try {
     const orders = await AppDataSource.getRepository(Order).find({ 
       where: { status: Not(OrderStatus.Archived) },
-      relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
+      relations: [
+        'productDetails', 
+        'productDetails.product', 
+        'operator', 
+        'orderRecipe', 
+        'orderRecipe.productRecipes', 
+        'orderRecipe.productRecipes.productDetail'
+      ] // Include all necessary relationships
     });
     res.json(orders);
   } catch (error) {
