@@ -28,11 +28,13 @@ dotenv.config({ path: '.env' });
 export const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT!),
+  username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution], // Ensure Operator entity is included
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution, OrderRecipe, ProductRecipe], // Ensure Operator entity is included
   synchronize: true,
 });
 
@@ -442,10 +444,7 @@ app.listen(port, () => {
   logger.debug(`DB_USERNAME: ${process.env.DB_USERNAME}`);
   logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
   logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
-
-    .catch((err: any) => logger.error('Unable to connect to the database:', err));
   AppDataSource.initialize()
     .then(() => logger.info('Database connected'))
     .catch((err: any) => logger.error('Unable to connect to the database:', err));
-});
 });
