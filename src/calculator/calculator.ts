@@ -53,9 +53,9 @@ export const createOrderRecipe = (order: Order) => {
         throw new Error('Unknown rate unit');
     }
 
-    let seedsSlurryToPrepareKg = order.quantity + order.extraSlurry / 100 * order.quantity;
-    let literSlurryRecipeToMix = rateMlTo100Kg * seedsSlurryToPrepareKg / 100;
-    let kgSlurryRecipeToWeight = literSlurryRecipeToMix * productDetail.product.density;
+    const seedsSlurryToPrepareKg = order.quantity + order.extraSlurry / 100 * order.quantity;
+    const literSlurryRecipeToMix = rateMlTo100Kg * seedsSlurryToPrepareKg / 100;
+    const kgSlurryRecipeToWeight = literSlurryRecipeToMix * productDetail.product.density;
 
     return {
       productDetail,
@@ -74,10 +74,12 @@ export const createOrderRecipe = (order: Order) => {
   const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
   const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
   const slurryTotalKgRecipeToWeight = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToWeight, 0);
-  
-  let extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry / 100;
-  let totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
-  let nbSeedsUnits = order.quantity / unitWeight;
+
+  const extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry / 100;
+  const totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
+  const nbSeedsUnits = order.quantity / unitWeight;
+
+  const numberOfBags = order.quantity / unitWeight;
 
   return {
     order,
