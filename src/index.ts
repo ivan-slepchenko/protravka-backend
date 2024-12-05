@@ -123,23 +123,35 @@ app.post('/api/orders', verifyToken, async (req, res) => {
       }));
 
       const order = AppDataSource.getRepository(Order).create({
-        ...orderData,
+        ...orderData as Partial<Order>,
         operator,
         crop,
         variety,
         productDetails: productDetailsWithProduct
-      })[0];
+      });
+      const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
-      const orderRecipe = createOrderRecipe(order);
-      order.orderRecipe = orderRecipe;
+      console.log('Order created:', order);
+
+      const orderRecipeData = createOrderRecipe(savedOrder);
+      const productRecipes = orderRecipeData.productRecipes.map(recipeData => 
+        AppDataSource.getRepository(ProductRecipe).create(recipeData)
+      );
+      await AppDataSource.getRepository(ProductRecipe).save(productRecipes);
+
+      const orderRecipe = AppDataSource.getRepository(OrderRecipe).create({
+        ...orderRecipeData,
+        productRecipes,
+      });
+      savedOrder.orderRecipe = orderRecipe;
   
-      logger.debug('Order Data:', order);
+      logger.debug('Order Data:', savedOrder);
   
-      const savedOrders = await AppDataSource.getRepository(Order).save(order);
+      const updatedOrder = await AppDataSource.getRepository(Order).save(savedOrder);
   
-      logger.debug('Saved Order:', savedOrders);
+      logger.debug('Updated Order:', updatedOrder);
   
-      res.status(201).json(savedOrders); 
+      res.status(201).json(savedOrder); 
     }
   } catch (error) {
     logger.error('Failed to create order:', error);
@@ -444,14 +456,18 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
   }
 });
 
-app.listen(port, () => {
-  logger.info(`Server is running on port ${port}`);
-  logger.debug(`DB_HOST: ${process.env.DB_HOST}`);
-  logger.debug(`DB_PORT: ${process.env.DB_PORT}`);
-  logger.debug(`DB_USERNAME: ${process.env.DB_USERNAME}`);
-  logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
-  logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
-  AppDataSource.initialize()
-    .then(() => logger.info('Database connected'))
-    .catch((err: any) => logger.error('Unable to connect to the database:', err));
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    logger.info(`Server is running on port ${port}`);
+    logger.debug(`DB_HOST: ${process.env.DB_HOST}`);
+    logger.debug(`DB_PORT: ${process.env.DB_PORT}`);
+    logger.debug(`DB_USERNAME: ${process.env.DB_USERNAME}`);
+    logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
+    logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
+    AppDataSource.initialize()
+      .then(() => logger.info('Database connected'))
+      .catch((err: any) => logger.error('Unable to connect to the database:', err));
+  });
+}
+
+export default app;
