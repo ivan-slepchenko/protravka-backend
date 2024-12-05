@@ -74,6 +74,7 @@ export const createOrderRecipe = (order: Order) => {
   const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
   const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
   const slurryTotalKgRecipeToWeight = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToWeight, 0);
+  
   let extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry / 100;
   let totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
   let nbSeedsUnits = order.quantity / unitWeight;
