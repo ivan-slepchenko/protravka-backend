@@ -14,6 +14,11 @@ export enum OrderStatus {
   Executed = "Executed",
 }
 
+export enum Packaging {
+  InSeeds = 'inSeeds',
+  InKg = 'inKg',
+}
+
 @Entity()
 export class Order {
     @PrimaryGeneratedColumn('uuid')
@@ -44,23 +49,42 @@ export class Order {
     @ManyToOne(() => Variety, { eager: true })
     variety!: Variety;
 
+    /**
+     * The thousand kernel weight in grams.
+     * In the spreadsheet, [I10].
+     */
     @Column('float')
     tkw!: number;
 
     /**
      * The quantity of the order in kilograms.
-     * In the spreadsheet, it is the cell "O6".
+     * In the spreadsheet, [O6].
      */
-
-        @Column('float')
+    @Column('float')
     quantity!: number;
 
+    /**
+     * The extra slurry percentage.
+     * In the spreadsheet, [O10].
+     */
     @Column('float')
     extraSlurry!: number;
 
-    @Column()
-    packaging!: string;
+    /**
+     * The packaging type.
+     * Not represented in the spreadsheet.
+     */
+    @Column({
+        type: 'enum',
+        enum: Packaging,
+        default: Packaging.InSeeds,
+    })
+    packaging!: Packaging;
 
+    /**
+     * The size of the bag in kilograms or in thousand of seeds, depends on the packaging.
+     * In the spreadsheet, [L10].
+     */
     @Column('float')
     bagSize!: number;
 

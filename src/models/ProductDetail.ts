@@ -24,9 +24,6 @@ export class ProductDetail {
     @ManyToOne(() => Product)
     product!: Product;
 
-    @Column('float')
-    quantity!: number;
-
     @Column({
         type: 'enum',
         enum: RateUnit,
@@ -38,9 +35,6 @@ export class ProductDetail {
         enum: RateType,
     })
     rateType!: RateType;
-
-    @Column('float')
-    density!: number;
 
     @Column('float')
     rate!: number;

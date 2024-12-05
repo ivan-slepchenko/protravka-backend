@@ -1,9 +1,12 @@
-import { Order } from "../models/Order";
+import { Order, Packaging } from "../models/Order";
 import { RateType, RateUnit } from "../models/ProductDetail";
 import { ProductRecipe } from "../models/ProductRecipe";
 
 export const createOrderRecipe = (order: Order) => {
-  const unitWeight = order.bagSize * order.tkw / 1000;
+  
+    //weight of the bag in kg, [I15]
+  const unitWeight = order.packaging === Packaging.InKg ? order.bagSize : order.bagSize * order.tkw / 1000;
+  
   const productRecipes = order.productDetails.map((productDetail) => {
     let rateMltoU_KS = 0;
     let rateGToU_KS = 0;
@@ -14,13 +17,13 @@ export const createOrderRecipe = (order: Order) => {
       case RateUnit.ML:
         switch (productDetail.rateType) {
           case RateType.Unit:
-            rateMltoU_KS = productDetail.quantity;
+            rateMltoU_KS = productDetail.rate;
             rateGToU_KS = rateMltoU_KS * productDetail.product.density;
             rateMlTo100Kg = rateMltoU_KS / (unitWeight * 100);
             rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
             break;
           case RateType.Per100Kg:
-            rateMlTo100Kg = productDetail.quantity;
+            rateMlTo100Kg = productDetail.rate;
             rateMltoU_KS = rateMlTo100Kg / 100 * unitWeight;
             rateGToU_KS = rateMltoU_KS * productDetail.product.density;
             rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
@@ -32,13 +35,13 @@ export const createOrderRecipe = (order: Order) => {
       case RateUnit.G:
         switch (productDetail.rateType) {
           case RateType.Unit:
-            rateGToU_KS = productDetail.quantity;
+            rateGToU_KS = productDetail.rate;
             rateMltoU_KS = rateGToU_KS / productDetail.product.density;
             rateGTo100Kg = rateGToU_KS / (unitWeight * 100);
             rateMlTo100Kg = rateGTo100Kg / productDetail.product.density;
             break;
           case RateType.Per100Kg:
-            rateGTo100Kg = productDetail.quantity;
+            rateGTo100Kg = productDetail.rate;
             rateGToU_KS = rateGTo100Kg / 100 * unitWeight;
             rateMltoU_KS = rateGToU_KS / productDetail.product.density;
             rateMlTo100Kg = rateGTo100Kg / productDetail.product.density;        
