@@ -1,6 +1,5 @@
 import { Order, Packaging } from "../models/Order";
 import { RateType, RateUnit } from "../models/ProductDetail";
-import { ProductRecipe } from "../models/ProductRecipe";
 
 export const createOrderRecipe = (order: Order) => {
   
@@ -19,12 +18,12 @@ export const createOrderRecipe = (order: Order) => {
           case RateType.Unit:
             rateMltoU_KS = productDetail.rate;
             rateGToU_KS = rateMltoU_KS * productDetail.product.density;
-            rateMlTo100Kg = rateMltoU_KS / (unitWeight * 100);
+            rateMlTo100Kg = 100 * rateMltoU_KS / unitWeight;
             rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
             break;
           case RateType.Per100Kg:
             rateMlTo100Kg = productDetail.rate;
-            rateMltoU_KS = rateMlTo100Kg / 100 * unitWeight;
+            rateMltoU_KS = unitWeight * rateMlTo100Kg / 100;
             rateGToU_KS = rateMltoU_KS * productDetail.product.density;
             rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
             break;
@@ -71,7 +70,7 @@ export const createOrderRecipe = (order: Order) => {
 
   const slurryTotalMltoU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateMltoU_KS, 0);
   const slurryTotalGToU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateGToU_KS, 0);
-  const slurryTotalMlTo100g = productRecipes.reduce((sum, recipe) => sum + recipe.rateMlTo100Kg, 0);
+  const slurryTotalMlTo100Kg = productRecipes.reduce((sum, recipe) => sum + recipe.rateMlTo100Kg, 0);
   const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
   const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
   const slurryTotalKgRecipeToWeight = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToWeight, 0);
@@ -84,7 +83,7 @@ export const createOrderRecipe = (order: Order) => {
     totalCompoundsDensity,
     slurryTotalMltoU_KS,
     slurryTotalGToU_KS,
-    slurryTotalMlTo100g,
+    slurryTotalMlTo100Kg,
     slurryTotalGTo100Kgs,
     slurryTotalMlRecipeToMix,
     slurryTotalKgRecipeToWeight,

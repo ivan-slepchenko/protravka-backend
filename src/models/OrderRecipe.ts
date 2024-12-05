@@ -21,7 +21,7 @@ export class OrderRecipe {
     slurryTotalGToU_KS!: number;
 
     @Column('float')
-    slurryTotalMlTo100g!: number;
+    slurryTotalMlTo100Kg!: number;
 
     @Column('float')
     slurryTotalGTo100Kgs!: number;

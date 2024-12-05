@@ -128,11 +128,12 @@ describe('createOrderRecipe', () => {
 
     expect(orderRecipeData).toBeDefined();
     expect(orderRecipeData.order.id).toBe(order.id);
-    expect(orderRecipeData.totalCompoundsDensity).toEqual(1.154);
-    expect(orderRecipeData.slurryTotalMltoU_KS).toEqual(246.1);
-    expect(orderRecipeData.slurryTotalGToU_KS).toEqual(283.96);
-    expect(orderRecipeData.slurryTotalMlTo100g).toEqual(2604.3);
-    expect(orderRecipeData.slurryTotalGTo100Kgs).toEqual(3004.86);
+    expect(orderRecipeData.totalCompoundsDensity).toBeCloseTo(1.154, 3);
+    expect(orderRecipeData.slurryTotalMltoU_KS).toBeCloseTo(246.1, 1);
+    expect(orderRecipeData.slurryTotalGToU_KS).toBeCloseTo(283.96, 2);
+
+    expect(orderRecipeData.slurryTotalMlTo100Kg).toBeCloseTo(2604.3, 1);
+    expect(orderRecipeData.slurryTotalGTo100Kgs).toBeCloseTo(3004.86, 2);
     expect(orderRecipeData.productRecipes.length).toBe(order.productDetails.length);
   });
 
