@@ -31,4 +31,7 @@ export class ProductRecipe {
 
     @Column('float')
     kgSlurryRecipeToWeight!: number;
+
+    @Column('float')
+    numberOfBags!: number;
 }

@@ -93,5 +93,6 @@ export const createOrderRecipe = (order: Order) => {
     extraSlurryPipesAndPompFeedingMl,
     nbSeedsUnits,
     productRecipes,
+    numberOfBags,
   };
 };
