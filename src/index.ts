@@ -59,7 +59,8 @@ const corsOptions = {
 };
   
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); // Increase payload size limit for JSON
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Increase payload size limit for URL-encoded data
 app.use(cookieParser())
 
 app.use((req, res, next) => {
@@ -80,7 +81,8 @@ app.get('/api/orders', verifyToken, async (req, res) => {
         'operator', 
         'orderRecipe', 
         'orderRecipe.productRecipes', 
-        'orderRecipe.productRecipes.productDetail'
+        'orderRecipe.productRecipes.productDetail',
+        'orderRecipe.productRecipes.productDetail.product'
       ] // Include all necessary relationships
     });
     res.json(orders);
