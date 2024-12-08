@@ -30,8 +30,5 @@ export class ProductRecipe {
     literSlurryRecipeToMix!: number;
 
     @Column('float')
-    kgSlurryRecipeToWeight!: number;
-
-    @Column('float')
-    numberOfBags!: number;
+    kgSlurryRecipeToMix!: number;
 }
