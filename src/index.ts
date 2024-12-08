@@ -82,8 +82,8 @@ app.get('/api/orders', verifyToken, async (req, res) => {
         'orderRecipe', 
         'orderRecipe.productRecipes', 
         'orderRecipe.productRecipes.productDetail',
-        'orderRecipe.productRecipes.productDetail.product'
-      ] // Include all necessary relationships
+        'orderRecipe.productRecipes.productDetail.product',
+      ] // Remove 'orderExecution' and 'orderExecution.productExecutions'
     });
     res.json(orders);
   } catch (error) {
@@ -455,6 +455,25 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
   } catch (error) {
     logger.error('Failed to create or update order execution:', error);
     res.status(500).json({ error: 'Failed to create or update order execution' });
+  }
+});
+
+app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+      where: { order: { id: orderId } },
+      relations: ['productExecutions'],
+    });
+
+    if (orderExecution) {
+      res.json(orderExecution);
+    } else {
+      res.status(404).json({ error: 'Order execution not found' });
+    }
+  } catch (error) {
+    logger.error('Failed to fetch order execution:', error);
+    res.status(500).json({ error: 'Failed to fetch order execution' });
   }
 });
 

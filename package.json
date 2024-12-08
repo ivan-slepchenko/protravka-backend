@@ -1,6 +1,6 @@
 {
   "name": "protravka-backend",
-  "version": "1.0.29",
+  "version": "1.0.31",
   "description": "Backend for Protravka project",
   "main": "index.js",
   "scripts": {
