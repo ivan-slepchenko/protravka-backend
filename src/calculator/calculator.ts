@@ -73,7 +73,7 @@ export const createOrderRecipe = (order: Order) => {
   const slurryTotalMlTo100Kg = productRecipes.reduce((sum, recipe) => sum + recipe.rateMlTo100Kg, 0);
   const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
   const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
-  const slurryTotalKgRecipeToWeight = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToMix, 0);
+  const slurryTotalKgRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToMix, 0);
 
   const extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry / 100;
   const totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
@@ -87,7 +87,7 @@ export const createOrderRecipe = (order: Order) => {
     slurryTotalMlTo100Kg,
     slurryTotalGTo100Kgs,
     slurryTotalMlRecipeToMix,
-    slurryTotalKgRecipeToWeight,
+    slurryTotalKgRecipeToMix,
     extraSlurryPipesAndPompFeedingMl,
     nbSeedsUnits,
     productRecipes,

@@ -477,6 +477,32 @@ app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
   }
 });
 
+app.post('/api/calculate-order', verifyToken, async (req, res) => {
+  try {
+    const order = req.body;
+
+    // Fetch product details and add them to the order
+    const productDetailsWithProduct = await Promise.all(order.productDetails.map(async (detail: any) => {
+      const product = await AppDataSource.getRepository(Product).findOneBy({ id: detail.productId });
+      if (!product) {
+        throw new Error(`Invalid product ID: ${detail.productId}`);
+      }
+      return { ...detail, product };
+    }));
+
+    order.productDetails = productDetailsWithProduct;
+
+    const calculatedValues = createOrderRecipe(order);
+    res.json({
+      slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
+      slurryTotalKgRecipeToMix: calculatedValues.slurryTotalKgRecipeToMix,
+    });
+  } catch (error) {
+    logger.error('Failed to calculate order:', error);
+    res.status(500).json({ error: 'Failed to calculate order' });
+  }
+});
+
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);
