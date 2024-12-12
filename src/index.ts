@@ -494,8 +494,9 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
 
     const calculatedValues = createOrderRecipe(order);
     res.json({
-      slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
-      slurryTotalGrRecipeToMix: calculatedValues.slurryTotalGrRecipeToMix,
+        slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
+        slurryTotalGrRecipeToMix: calculatedValues.slurryTotalGrRecipeToMix,
+        totalCompoundsDensity: calculatedValues.totalCompoundsDensity,
     });
   } catch (error) {
     logger.error('Failed to calculate order:', error);
