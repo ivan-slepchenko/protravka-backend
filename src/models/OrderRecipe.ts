@@ -30,7 +30,7 @@ export class OrderRecipe {
     slurryTotalMlRecipeToMix!: number;
 
     @Column('float')
-    slurryTotalKgRecipeToMix!: number;
+    slurryTotalGrRecipeToMix!: number;
 
     @Column('float')
     extraSlurryPipesAndPompFeedingMl!: number;

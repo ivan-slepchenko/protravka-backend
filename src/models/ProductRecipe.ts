@@ -18,17 +18,17 @@ export class ProductRecipe {
     rateMltoU_KS!: number;
 
     @Column('float')
-    rateGToU_KS!: number;
+    rateGrToU_KS!: number;
 
     @Column('float')
     rateMlTo100Kg!: number;
 
     @Column('float')
-    rateGTo100Kg!: number;
+    rateGrTo100Kg!: number;
 
     @Column('float')
-    literSlurryRecipeToMix!: number;
+    mlSlurryRecipeToMix!: number;
 
     @Column('float')
-    kgSlurryRecipeToMix!: number;
+    grSlurryRecipeToMix!: number;
 }

@@ -24,5 +24,5 @@ export class OrderExecution {
   consumptionPhoto!: string;
 
   @Column('float', { nullable: true })
-  packedQuantity!: number;
+  packedseedsToTreatKg!: number;
 }

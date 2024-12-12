@@ -8,24 +8,24 @@ export const createOrderRecipe = (order: Order) => {
   
   const productRecipes = order.productDetails.map((productDetail) => {
     let rateMltoU_KS = 0;
-    let rateGToU_KS = 0;
+    let rateGrToU_KS = 0;
     let rateMlTo100Kg = 0;
-    let rateGTo100Kg = 0;
+    let rateGrTo100Kg = 0;
 
     switch (productDetail.rateUnit) {
       case RateUnit.ML:
         switch (productDetail.rateType) {
           case RateType.Unit:
             rateMltoU_KS = productDetail.rate;
-            rateGToU_KS = rateMltoU_KS * productDetail.product.density;
+            rateGrToU_KS = rateMltoU_KS * productDetail.product.density;
             rateMlTo100Kg = 100 * rateMltoU_KS / unitWeight;
-            rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
+            rateGrTo100Kg = rateMlTo100Kg * productDetail.product.density;
             break;
           case RateType.Per100Kg:
             rateMlTo100Kg = productDetail.rate;
             rateMltoU_KS = unitWeight * rateMlTo100Kg / 100;
-            rateGToU_KS = rateMltoU_KS * productDetail.product.density;
-            rateGTo100Kg = rateMlTo100Kg * productDetail.product.density;
+            rateGrToU_KS = rateMltoU_KS * productDetail.product.density;
+            rateGrTo100Kg = rateMlTo100Kg * productDetail.product.density;
             break;
           default:
             throw new Error('Unknown rate unit');
@@ -34,16 +34,16 @@ export const createOrderRecipe = (order: Order) => {
       case RateUnit.G:
         switch (productDetail.rateType) {
           case RateType.Unit:
-            rateGToU_KS = productDetail.rate;
-            rateMltoU_KS = rateGToU_KS / productDetail.product.density;
-            rateGTo100Kg = rateGToU_KS / (unitWeight * 100);
-            rateMlTo100Kg = rateGTo100Kg / productDetail.product.density;
+            rateGrToU_KS = productDetail.rate;
+            rateMltoU_KS = rateGrToU_KS / productDetail.product.density;
+            rateGrTo100Kg = rateGrToU_KS / (unitWeight * 100);
+            rateMlTo100Kg = rateGrTo100Kg / productDetail.product.density;
             break;
           case RateType.Per100Kg:
-            rateGTo100Kg = productDetail.rate;
-            rateGToU_KS = rateGTo100Kg / 100 * unitWeight;
-            rateMltoU_KS = rateGToU_KS / productDetail.product.density;
-            rateMlTo100Kg = rateGTo100Kg / productDetail.product.density;        
+            rateGrTo100Kg = productDetail.rate;
+            rateGrToU_KS = rateGrTo100Kg / 100 * unitWeight;
+            rateMltoU_KS = rateGrToU_KS / productDetail.product.density;
+            rateMlTo100Kg = rateGrTo100Kg / productDetail.product.density;        
             break;
           default:
             throw new Error('Unknown rate unit');
@@ -53,31 +53,31 @@ export const createOrderRecipe = (order: Order) => {
         throw new Error('Unknown rate unit');
     }
 
-    const seedsSlurryToPrepareKg = order.quantity + order.extraSlurry / 100 * order.quantity;
-    const literSlurryRecipeToMix = rateMlTo100Kg * seedsSlurryToPrepareKg / 100;
-    const kgSlurryRecipeToMix = literSlurryRecipeToMix * productDetail.product.density;
+    const seedsKgToUseForSlurryEstimation = order.seedsToTreatKg + order.extraSlurry / 100 * order.seedsToTreatKg;
+    const mlSlurryRecipeToMix = rateMlTo100Kg * seedsKgToUseForSlurryEstimation / 100;
+    const grSlurryRecipeToMix = mlSlurryRecipeToMix * productDetail.product.density;
 
     return {
       productDetail,
       rateMltoU_KS,
-      rateGToU_KS,
+      rateGrToU_KS,
       rateMlTo100Kg,
-      rateGTo100Kg,
-      literSlurryRecipeToMix,
-      kgSlurryRecipeToMix,
+      rateGrTo100Kg,
+      mlSlurryRecipeToMix,
+      grSlurryRecipeToMix,
     };
   });
 
   const slurryTotalMltoU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateMltoU_KS, 0);
-  const slurryTotalGToU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateGToU_KS, 0);
+  const slurryTotalGToU_KS = productRecipes.reduce((sum, recipe) => sum + recipe.rateGrToU_KS, 0);
   const slurryTotalMlTo100Kg = productRecipes.reduce((sum, recipe) => sum + recipe.rateMlTo100Kg, 0);
-  const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGTo100Kg, 0);
-  const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.literSlurryRecipeToMix, 0);
-  const slurryTotalKgRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.kgSlurryRecipeToMix, 0);
+  const slurryTotalGTo100Kgs = productRecipes.reduce((sum, recipe) => sum + recipe.rateGrTo100Kg, 0);
+  const slurryTotalMlRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.mlSlurryRecipeToMix, 0);
+  const slurryTotalGrRecipeToMix = productRecipes.reduce((sum, recipe) => sum + recipe.grSlurryRecipeToMix, 0);
 
   const extraSlurryPipesAndPompFeedingMl = slurryTotalMlRecipeToMix * order.extraSlurry / 100;
   const totalCompoundsDensity = slurryTotalGToU_KS / slurryTotalMltoU_KS;
-  const nbSeedsUnits = order.quantity / unitWeight;
+  const nbSeedsUnits = order.seedsToTreatKg / unitWeight;
 
   return {
     order,
@@ -87,7 +87,7 @@ export const createOrderRecipe = (order: Order) => {
     slurryTotalMlTo100Kg,
     slurryTotalGTo100Kgs,
     slurryTotalMlRecipeToMix,
-    slurryTotalKgRecipeToMix,
+    slurryTotalGrRecipeToMix,
     extraSlurryPipesAndPompFeedingMl,
     nbSeedsUnits,
     productRecipes,

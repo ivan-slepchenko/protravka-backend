@@ -7,11 +7,12 @@ import { OrderExecution } from './OrderExecution';
 import { OrderRecipe } from './OrderRecipe';
 
 export enum OrderStatus {
-  NotStarted = 'Not Started',
-  InProgress = 'In Progress',
-  Acknowledge = 'Acknowledge',
-  Archived = 'Archived',
-  Executed = "Executed",
+    NotStarted = 'Not Started',
+    InProgress = 'In Progress',
+    ToAcknowledge = 'ToAcknowledge',
+    Archived = 'Archived',
+    Completed = "Completed",
+    Failed = "Failed",
 }
 
 export enum Packaging {
@@ -57,11 +58,11 @@ export class Order {
     tkw!: number;
 
     /**
-     * The quantity of the order in kilograms.
+     * The seedsToTreatKg of the order in kilograms.
      * In the spreadsheet, [O6].
      */
     @Column('float')
-    quantity!: number;
+    seedsToTreatKg!: number;
 
     /**
      * The extra slurry percentage.

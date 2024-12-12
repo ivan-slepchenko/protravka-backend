@@ -14,7 +14,7 @@ export class ProductExecution {
   productId!: string;
 
   @Column('float')
-  appliedQuantity!: number;
+  appliedseedsToTreatKg!: number;
 
   @Column({ nullable: true })
   applicationPhoto!: string;

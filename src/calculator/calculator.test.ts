@@ -64,7 +64,7 @@ describe('createOrderRecipe', () => {
       packaging: Packaging.InSeeds,
       bagSize: 150,
       tkw: 63,
-      quantity: 1000,
+      seedsToTreatKg: 1000,
       extraSlurry: 10,
       productDetails: [
         {

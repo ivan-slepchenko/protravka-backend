@@ -92,16 +92,16 @@ app.get('/api/orders', verifyToken, async (req, res) => {
   }
 });
 
-app.get('/api/orders/archived', verifyToken, async (req, res) => {
+app.get('/api/orders/Archived', verifyToken, async (req, res) => {
   try {
-    const archivedOrders = await AppDataSource.getRepository(Order).find({ 
+    const ArchivedOrders = await AppDataSource.getRepository(Order).find({ 
       where: { status: OrderStatus.Archived },
       relations: ['productDetails', 'productDetails.product', 'operator'] // Include ProductDetails and Product relationships
     });
-    res.json(archivedOrders);
+    res.json(ArchivedOrders);
   } catch (error) {
-    logger.error('Failed to fetch archived orders:', error);
-    res.status(500).json({ error: 'Failed to fetch archived orders' });
+    logger.error('Failed to fetch Archived orders:', error);
+    res.status(500).json({ error: 'Failed to fetch Archived orders' });
   }
 });
 
@@ -401,19 +401,19 @@ interface OrderExecutionRequestBody {
   orderId: string;
   productExecutions: {
     productId: string;
-    appliedQuantity?: number;
+    appliedseedsToTreatKg?: number;
     applicationPhoto?: string;
     consumptionPhoto?: string;
   }[];
   applicationMethod?: string;
   packingPhoto?: string;
   consumptionPhoto?: string;
-  packedQuantity?: number;
+  packedseedsToTreatKg?: number;
 }
 
 app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
   try {
-    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedQuantity } = req.body;
+    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg } = req.body;
     const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
 
     if (!order) {
@@ -426,7 +426,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
 
       if (orderExecution) {
         // Update existing order execution
-        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedQuantity });
+        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg });
         // Update or add product executions
         for (const productExecutionData of productExecutions) {
           let productExecution = orderExecution.productExecutions.find(pe => pe.productId === productExecutionData.productId);
@@ -445,7 +445,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
           applicationMethod,
           packingPhoto,
           consumptionPhoto,
-          packedQuantity,
+          packedseedsToTreatKg,
         });
       }
 
@@ -495,7 +495,7 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
     const calculatedValues = createOrderRecipe(order);
     res.json({
       slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
-      slurryTotalKgRecipeToMix: calculatedValues.slurryTotalKgRecipeToMix,
+      slurryTotalGrRecipeToMix: calculatedValues.slurryTotalGrRecipeToMix,
     });
   } catch (error) {
     logger.error('Failed to calculate order:', error);
