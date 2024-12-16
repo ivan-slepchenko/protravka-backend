@@ -36,12 +36,12 @@ export const createOrderRecipe = (order: Order) => {
           case RateType.Unit:
             rateGrToU_KS = productDetail.rate;
             rateMltoU_KS = rateGrToU_KS / productDetail.product.density;
-            rateGrTo100Kg = rateGrToU_KS / (unitWeight * 100);
+            rateGrTo100Kg = 100 * rateGrToU_KS / unitWeight;
             rateMlTo100Kg = rateGrTo100Kg / productDetail.product.density;
             break;
           case RateType.Per100Kg:
             rateGrTo100Kg = productDetail.rate;
-            rateGrToU_KS = rateGrTo100Kg / 100 * unitWeight;
+            rateGrToU_KS = unitWeight * rateGrTo100Kg / 100;
             rateMltoU_KS = rateGrToU_KS / productDetail.product.density;
             rateMlTo100Kg = rateGrTo100Kg / productDetail.product.density;        
             break;
