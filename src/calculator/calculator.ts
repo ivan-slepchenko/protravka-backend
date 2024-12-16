@@ -59,6 +59,7 @@ export const createOrderRecipe = (order: Order) => {
 
     return {
       productDetail,
+      unitWeight,
       rateMltoU_KS,
       rateGrToU_KS,
       rateMlTo100Kg,

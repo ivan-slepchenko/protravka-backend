@@ -401,7 +401,7 @@ interface OrderExecutionRequestBody {
   orderId: string;
   productExecutions: {
     productId: string;
-    appliedseedsToTreatKg?: number;
+    appliedRateKg?: number;
     applicationPhoto?: string;
     consumptionPhoto?: string;
   }[];
