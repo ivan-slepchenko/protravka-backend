@@ -23,6 +23,8 @@ import { OrderRecipe } from './models/OrderRecipe';
 import { ProductRecipe } from './models/ProductRecipe';
 import { createOrderRecipe } from './calculator/calculator';
 
+console.log('Version:', version);
+
 dotenv.config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
