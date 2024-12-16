@@ -9,7 +9,7 @@ import { OrderRecipe } from './OrderRecipe';
 export enum OrderStatus {
     NotStarted = 'Not Started',
     InProgress = 'In Progress',
-    ToAcknowledge = 'ToAcknowledge',
+    ToAcknowledge = 'To Acknowledge',
     Archived = 'Archived',
     Completed = "Completed",
     Failed = "Failed",

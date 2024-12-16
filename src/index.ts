@@ -409,11 +409,12 @@ interface OrderExecutionRequestBody {
   packingPhoto?: string;
   consumptionPhoto?: string;
   packedseedsToTreatKg?: number;
+  slurryConsumptionPerLotKg?: number;
 }
 
 app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
   try {
-    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg } = req.body;
+    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg } = req.body;
     const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
 
     if (!order) {
@@ -426,7 +427,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
 
       if (orderExecution) {
         // Update existing order execution
-        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg });
+        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg });
         // Update or add product executions
         for (const productExecutionData of productExecutions) {
           let productExecution = orderExecution.productExecutions.find(pe => pe.productId === productExecutionData.productId);
@@ -446,6 +447,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
           packingPhoto,
           consumptionPhoto,
           packedseedsToTreatKg,
+          slurryConsumptionPerLotKg,
         });
       }
 
