@@ -25,4 +25,7 @@ export class OrderExecution {
 
   @Column('float', { nullable: true })
   packedseedsToTreatKg!: number;
+
+  @Column({ nullable: true })
+  slurryConsumptionPerLotKg!: number;
 }
