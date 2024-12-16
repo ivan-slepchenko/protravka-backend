@@ -38,6 +38,9 @@ export class OrderRecipe {
     @Column('float')
     nbSeedsUnits!: number;
 
+    @Column('float')
+    unitWeight!: number;
+
     @OneToMany(() => ProductRecipe, (productRecipe) => productRecipe.orderRecipe, { cascade: true })
     productRecipes!: ProductRecipe[];
 }
