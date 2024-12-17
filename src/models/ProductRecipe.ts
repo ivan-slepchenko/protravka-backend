@@ -31,7 +31,4 @@ export class ProductRecipe {
 
     @Column('float')
     grSlurryRecipeToMix!: number;
-
-    @Column('float')
-    unitWeight!: number;
 }
