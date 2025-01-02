@@ -22,6 +22,7 @@ import { ProductExecution } from './models/ProductExecution';
 import { OrderRecipe } from './models/OrderRecipe';
 import { ProductRecipe } from './models/ProductRecipe';
 import { createOrderRecipe } from './calculator/calculator';
+import { OperatorToOrderExecution } from './models/OperatorToOrderExecution';
 
 console.log('Version:', version);
 
@@ -36,7 +37,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution, OrderRecipe, ProductRecipe], // Ensure Operator entity is included
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution, OrderRecipe, ProductRecipe, OperatorToOrderExecution], // Ensure Operator entity is included
   synchronize: true,
 });
 
@@ -505,6 +506,75 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
   } catch (error) {
     logger.error('Failed to calculate order:', error);
     res.status(500).json({ error: 'Failed to calculate order' });
+  }
+});
+
+app.post('/api/user-to-order-execution', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    const { currentPage, currentOrderId, currentProductIndex } = req.body;
+
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
+    if (!operator) {
+      res.status(404).json({ error: 'Operator not found' });
+    } else {
+      let userToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).findOne({
+        where: { operator: { id: operator.id } },
+        relations: ['orderExecution'],
+      });
+  
+      if (userToOrderExecution) {
+        // Update existing user-to-order-execution
+        userToOrderExecution.currentPage = currentPage;
+        userToOrderExecution.currentOrderId = currentOrderId;
+        userToOrderExecution.currentProductIndex = currentProductIndex;
+      } else {
+        // Create new user-to-order-execution
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOneBy({ order: { id: currentOrderId } });
+        if (orderExecution) {
+          userToOrderExecution = AppDataSource.getRepository(OperatorToOrderExecution).create({
+            operator,
+            orderExecution,
+            currentPage,
+            currentOrderId,
+            currentProductIndex,
+          });
+        } else {
+          res.status(400).json({ error: 'Invalid order ID' });
+          return;
+        }
+      }
+      let savedUserToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).save(userToOrderExecution);
+      res.status(201).json(savedUserToOrderExecution);
+    }
+  } catch (error) {
+    logger.error('Failed to create or update user-to-order-execution:', error);
+    res.status(500).json({ error: 'Failed to create or update user-to-order-execution' });
+  }
+});
+
+app.get('/api/user-to-order-execution', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
+
+    if (!operator) {
+      res.status(404).json({ error: 'Operator not found' });
+    } else {
+      const operatorToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).findOne({
+        where: { operator: { id: operator.id } },
+        relations: ['orderExecution'],
+      });
+  
+      if (operatorToOrderExecution) {
+        res.json(operatorToOrderExecution);
+      } else {
+        res.status(404).json({ error: 'User to order execution not found' });
+      }
+    }
+  } catch (error) {
+    logger.error('Failed to fetch user-to-order-execution:', error);
+    res.status(500).json({ error: 'Failed to fetch user-to-order-execution' });
   }
 });
 
