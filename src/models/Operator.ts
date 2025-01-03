@@ -1,5 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
-import { OperatorToOrderExecution } from './OperatorToOrderExecution';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { OrderExecution } from './OrderExecution';
 
 export enum Role {
   OPERATOR = 'operator',
@@ -33,6 +33,6 @@ export class Operator {
   @Column("simple-array")
   roles!: Role[];
 
-  @OneToOne(() => OperatorToOrderExecution, (operatorToOrderExecution) => operatorToOrderExecution.operator)
-  operatorToOrderExecution!: OperatorToOrderExecution;
+  @OneToMany(() => OrderExecution, (orderExecution) => orderExecution.operator)
+  orderExecutions!: OrderExecution[];
 }

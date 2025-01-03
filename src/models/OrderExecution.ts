@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
 import { Order } from './Order';
 import { ProductExecution } from './ProductExecution';
+import { Operator } from './Operator';
 
 @Entity()
 export class OrderExecution {
@@ -10,6 +11,9 @@ export class OrderExecution {
   @OneToOne(() => Order, (order) => order.orderExecution)
   @JoinColumn() // Specify that OrderExecution owns the relationship with Order
   order!: Order;
+ 
+  @ManyToOne(() => Operator, (operator) => operator.orderExecutions)
+  operator!: Operator;
 
   @OneToMany(() => ProductExecution, (productExecution) => productExecution.orderExecution, { cascade: true })
   productExecutions!: ProductExecution[];
@@ -28,4 +32,10 @@ export class OrderExecution {
 
   @Column('float', { nullable: true })
   slurryConsumptionPerLotKg!: number;
+
+  @Column({ nullable: true })
+  currentPage!: number;
+
+  @Column('int', { nullable: true })
+  currentProductIndex!: number;
 }

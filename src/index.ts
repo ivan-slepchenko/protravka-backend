@@ -413,14 +413,20 @@ interface OrderExecutionRequestBody {
   consumptionPhoto?: string;
   packedseedsToTreatKg?: number;
   slurryConsumptionPerLotKg?: number;
+  currentPage?: number;
+  currentProductIndex?: number;
 }
 
 app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
   try {
-    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg } = req.body;
+    const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg, currentPage, currentProductIndex } = req.body;
+    const user = req.user;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
     const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
 
-    if (!order) {
+    if (!operator) {
+      res.status(404).json({ error: 'Operator not found' });
+    } else if (!order) {
       res.status(400).json({ error: 'Invalid order ID' });
     } else {
       let orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
@@ -430,7 +436,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
 
       if (orderExecution) {
         // Update existing order execution
-        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg });
+        Object.assign(orderExecution, { applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg, currentPage, currentProductIndex });
         // Update or add product executions
         for (const productExecutionData of productExecutions) {
           let productExecution = orderExecution.productExecutions.find(pe => pe.productId === productExecutionData.productId);
@@ -445,12 +451,15 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
         // Create new order execution
         orderExecution = AppDataSource.getRepository(OrderExecution).create({
           order,
+          operator,
           productExecutions,
           applicationMethod,
           packingPhoto,
           consumptionPhoto,
           packedseedsToTreatKg,
           slurryConsumptionPerLotKg,
+          currentPage,
+          currentProductIndex,
         });
       }
 
@@ -482,6 +491,27 @@ app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
   }
 });
 
+app.get('/api/user-order-executions', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
+
+    if (!operator) {
+      res.status(404).json({ error: 'Operator not found' });
+    } else {
+      const orderExecutions = await AppDataSource.getRepository(OrderExecution).find({
+        where: { operator: { id: operator.id } },
+        relations: ['order', 'productExecutions'],
+      });
+
+      res.json(orderExecutions);
+    }
+  } catch (error) {
+    logger.error('Failed to fetch user order executions:', error);
+    res.status(500).json({ error: 'Failed to fetch user order executions' });
+  }
+});
+
 app.post('/api/calculate-order', verifyToken, async (req, res) => {
   try {
     const order = req.body;
@@ -506,75 +536,6 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
   } catch (error) {
     logger.error('Failed to calculate order:', error);
     res.status(500).json({ error: 'Failed to calculate order' });
-  }
-});
-
-app.post('/api/user-to-order-execution', verifyToken, async (req, res) => {
-  try {
-    const user = req.user;
-    const { currentPage, currentOrderId, currentProductIndex } = req.body;
-
-    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
-    if (!operator) {
-      res.status(404).json({ error: 'Operator not found' });
-    } else {
-      let userToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).findOne({
-        where: { operator: { id: operator.id } },
-        relations: ['orderExecution'],
-      });
-  
-      if (userToOrderExecution) {
-        // Update existing user-to-order-execution
-        userToOrderExecution.currentPage = currentPage;
-        userToOrderExecution.currentOrderId = currentOrderId;
-        userToOrderExecution.currentProductIndex = currentProductIndex;
-      } else {
-        // Create new user-to-order-execution
-        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOneBy({ order: { id: currentOrderId } });
-        if (orderExecution) {
-          userToOrderExecution = AppDataSource.getRepository(OperatorToOrderExecution).create({
-            operator,
-            orderExecution,
-            currentPage,
-            currentOrderId,
-            currentProductIndex,
-          });
-        } else {
-          res.status(400).json({ error: 'Invalid order ID' });
-          return;
-        }
-      }
-      let savedUserToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).save(userToOrderExecution);
-      res.status(201).json(savedUserToOrderExecution);
-    }
-  } catch (error) {
-    logger.error('Failed to create or update user-to-order-execution:', error);
-    res.status(500).json({ error: 'Failed to create or update user-to-order-execution' });
-  }
-});
-
-app.get('/api/user-to-order-execution', verifyToken, async (req, res) => {
-  try {
-    const user = req.user;
-    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
-
-    if (!operator) {
-      res.status(404).json({ error: 'Operator not found' });
-    } else {
-      const operatorToOrderExecution = await AppDataSource.getRepository(OperatorToOrderExecution).findOne({
-        where: { operator: { id: operator.id } },
-        relations: ['orderExecution'],
-      });
-  
-      if (operatorToOrderExecution) {
-        res.json(operatorToOrderExecution);
-      } else {
-        res.status(404).json({ error: 'User to order execution not found' });
-      }
-    }
-  } catch (error) {
-    logger.error('Failed to fetch user-to-order-execution:', error);
-    res.status(500).json({ error: 'Failed to fetch user-to-order-execution' });
   }
 });
 
