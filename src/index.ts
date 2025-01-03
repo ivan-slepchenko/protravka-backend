@@ -22,7 +22,6 @@ import { ProductExecution } from './models/ProductExecution';
 import { OrderRecipe } from './models/OrderRecipe';
 import { ProductRecipe } from './models/ProductRecipe';
 import { createOrderRecipe } from './calculator/calculator';
-import { OperatorToOrderExecution } from './models/OperatorToOrderExecution';
 
 console.log('Version:', version);
 
@@ -37,7 +36,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME,
   migrations: ['dist/migrations/*.js'],
   migrationsTableName: 'migrations',
-  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution, OrderRecipe, ProductRecipe, OperatorToOrderExecution], // Ensure Operator entity is included
+  entities: [Order, ProductDetail, Operator, Crop, Variety, Product, OrderExecution, ProductExecution, OrderRecipe, ProductRecipe], // Ensure Operator entity is included
   synchronize: true,
 });
 
@@ -481,7 +480,7 @@ app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
     });
 
     if (orderExecution) {
-      res.json(orderExecution);
+      res.json({ orderId: orderExecution.order.id, ...orderExecution });
     } else {
       res.status(404).json({ error: 'Order execution not found' });
     }
@@ -504,7 +503,7 @@ app.get('/api/user-order-executions', verifyToken, async (req, res) => {
         relations: ['order', 'productExecutions'],
       });
 
-      res.json(orderExecutions);
+      res.json(orderExecutions.map(orderExecution => ({ orderId: orderExecution.order.id, ...orderExecution })));
     }
   } catch (error) {
     logger.error('Failed to fetch user order executions:', error);
