@@ -416,7 +416,7 @@ interface OrderExecutionRequestBody {
   currentProductIndex?: number;
 }
 
-app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
+app.post('/api/executions', verifyToken, async (req: express.Request<{}, {}, OrderExecutionRequestBody>, res) => {
   try {
     const { orderId, productExecutions, applicationMethod, packingPhoto, consumptionPhoto, packedseedsToTreatKg, slurryConsumptionPerLotKg, currentPage, currentProductIndex } = req.body;
     const user = req.user;
@@ -471,7 +471,7 @@ app.post('/api/order-executions', verifyToken, async (req: express.Request<{}, {
   }
 });
 
-app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
+app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
     const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
@@ -490,7 +490,7 @@ app.get('/api/order-executions/:orderId', verifyToken, async (req, res) => {
   }
 });
 
-app.get('/api/user-order-executions', verifyToken, async (req, res) => {
+app.get('/api/executions/user-order-executions', verifyToken, async (req, res) => {
   try {
     const user = req.user;
     const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
