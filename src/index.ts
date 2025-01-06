@@ -471,6 +471,27 @@ app.post('/api/executions', verifyToken, async (req: express.Request<{}, {}, Ord
   }
 });
 
+app.get('/api/executions/user-order-executions', verifyToken, async (req, res) => {
+  try {
+    const user = req.user;
+    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
+
+    if (!operator) {
+      res.status(404).json({ error: 'Operator not found' });
+    } else {
+      const orderExecutions = await AppDataSource.getRepository(OrderExecution).find({
+        where: { operator: { id: operator.id } },
+        relations: ['productExecutions', "order"],
+      });
+
+      res.json(orderExecutions.map(orderExecution => ({ orderId: orderExecution.order.id, ...orderExecution })));
+    }
+  } catch (error) {
+    logger.error('Failed to fetch user order executions:', error);
+    res.status(500).json({ error: 'Failed to fetch user order executions' });
+  }
+});
+
 app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -487,27 +508,6 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
   } catch (error) {
     logger.error('Failed to fetch order execution:', error);
     res.status(500).json({ error: 'Failed to fetch order execution' });
-  }
-});
-
-app.get('/api/executions/user-order-executions', verifyToken, async (req, res) => {
-  try {
-    const user = req.user;
-    const operator = await AppDataSource.getRepository(Operator).findOneBy({ firebaseUserId: user.uid });
-
-    if (!operator) {
-      res.status(404).json({ error: 'Operator not found' });
-    } else {
-      const orderExecutions = await AppDataSource.getRepository(OrderExecution).find({
-        where: { operator: { id: operator.id } },
-        relations: ['order', 'productExecutions'],
-      });
-
-      res.json(orderExecutions.map(orderExecution => ({ orderId: orderExecution.order.id, ...orderExecution })));
-    }
-  } catch (error) {
-    logger.error('Failed to fetch user order executions:', error);
-    res.status(500).json({ error: 'Failed to fetch user order executions' });
   }
 });
 
