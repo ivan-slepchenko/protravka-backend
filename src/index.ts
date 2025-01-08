@@ -501,7 +501,7 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
     });
 
     if (orderExecution) {
-      res.json({ orderId: orderExecution.order.id, ...orderExecution });
+      res.json( orderExecution );
     } else {
       res.status(404).json({ error: 'Order execution not found' });
     }
