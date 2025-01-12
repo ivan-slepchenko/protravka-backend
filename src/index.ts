@@ -107,6 +107,10 @@ app.get('/api/orders/Archived', verifyToken, async (req, res) => {
   }
 });
 
+app.get('/features', (req, res) => {
+  res.json({ lab: process.env.LAB_FEATURE === 'true' });
+});
+
 app.post('/api/orders', verifyToken, async (req, res) => {
   try {
     const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
