@@ -5,7 +5,7 @@ export enum Role {
   OPERATOR = 'operator',
   ADMIN = 'admin',
   MANAGER = 'manager',
-  LABORATORY_ASSISTANT = 'laboratory_assistant',
+  LABORATORY = 'laboratory',
 }
 
 @Entity()
