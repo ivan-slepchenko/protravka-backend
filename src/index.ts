@@ -115,12 +115,12 @@ app.post('/api/orders', verifyToken, async (req, res) => {
   try {
     const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
 
-    const operator = await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
+    const operator = operatorId === undefined ? null : await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
     const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
     const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId });
 
-    if (!operator || !crop || !variety) {
-      res.status(400).json({ error: 'Invalid operator, crop, or variety ID' , message: 'Invalid operator, crop, or variety ID' });
+    if ((!operator && operatorId !== undefined) || !crop || !variety) {
+      res.status(400).json({ error: 'Invalid operator, crop, or variety ID', message: 'Invalid operator, crop, or variety ID' });
     } else {
       const productDetailsWithProduct = await Promise.all(productDetails.map(async (detail: any) => {
         const product = await AppDataSource.getRepository(Product).findOneBy({ id: detail.productId });
@@ -141,25 +141,34 @@ app.post('/api/orders', verifyToken, async (req, res) => {
 
       console.log('Order created:', order);
 
-      const orderRecipeData = createOrderRecipe(savedOrder);
-      const productRecipes = orderRecipeData.productRecipes.map(recipeData => 
-        AppDataSource.getRepository(ProductRecipe).create(recipeData)
-      );
-      await AppDataSource.getRepository(ProductRecipe).save(productRecipes);
-
-      const orderRecipe = AppDataSource.getRepository(OrderRecipe).create({
-        ...orderRecipeData,
-        productRecipes,
-      });
-      savedOrder.orderRecipe = orderRecipe;
+      if (process.env.LAB_FEATURE !== 'true') {
+        const orderRecipeData = createOrderRecipe(savedOrder);
+        if (orderRecipeData === undefined) {
+          logger.error('Invalid order recipe data:', orderRecipeData);
+          res.status(400).json({ error: 'Invalid order recipe data', message: 'Invalid order recipe data' });
+        } else {
+          const productRecipes = orderRecipeData.productRecipes.map(recipeData =>
+            AppDataSource.getRepository(ProductRecipe).create(recipeData)
+          );
+          await AppDataSource.getRepository(ProductRecipe).save(productRecipes);
   
-      logger.debug('Order Data:', savedOrder);
-  
-      const updatedOrder = await AppDataSource.getRepository(Order).save(savedOrder);
-  
-      logger.debug('Updated Order:', updatedOrder);
-  
-      res.status(201).json(savedOrder); 
+          const orderRecipe = AppDataSource.getRepository(OrderRecipe).create({
+            ...orderRecipeData,
+            productRecipes,
+          });
+          savedOrder.orderRecipe = orderRecipe;
+      
+          logger.debug('Order Data:', savedOrder);
+      
+          const updatedOrder = await AppDataSource.getRepository(Order).save(savedOrder);
+      
+          logger.debug('Updated Order:', updatedOrder);
+      
+          res.status(201).json(updatedOrder);
+        }
+      } else {
+        res.status(201).json(savedOrder);
+      }
     }
   } catch (error) {
     logger.error('Failed to create order:', error);
@@ -531,11 +540,16 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
     order.productDetails = productDetailsWithProduct;
 
     const calculatedValues = createOrderRecipe(order);
-    res.json({
-        slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
-        slurryTotalGrRecipeToMix: calculatedValues.slurryTotalGrRecipeToMix,
-        totalCompoundsDensity: calculatedValues.totalCompoundsDensity,
-    });
+    if (calculatedValues === undefined) {
+      logger.error('Invalid order recipe data:', calculatedValues);
+      res.status(400).json({ error: 'Invalid order recipe data', message: 'Invalid order recipe data' });
+    } else {
+      res.json({
+          slurryTotalMlRecipeToMix: calculatedValues.slurryTotalMlRecipeToMix,
+          slurryTotalGrRecipeToMix: calculatedValues.slurryTotalGrRecipeToMix,
+          totalCompoundsDensity: calculatedValues.totalCompoundsDensity,
+      });
+    }
   } catch (error) {
     logger.error('Failed to calculate order:', error);
     res.status(500).json({ error: 'Failed to calculate order' });

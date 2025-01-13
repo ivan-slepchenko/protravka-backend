@@ -114,7 +114,7 @@ describe('createOrderRecipe', () => {
         },
       ],
       lotNumber: 'lot1',
-      status: OrderStatus.NotStarted,
+      status: OrderStatus.ReadyToStart,
       recipeDate: new Date().toISOString(),
       applicationDate: new Date().toISOString(),
       operator: new Operator(),

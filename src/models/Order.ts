@@ -7,8 +7,11 @@ import { OrderExecution } from './OrderExecution';
 import { OrderRecipe } from './OrderRecipe';
 
 export enum OrderStatus {
-    NotStarted = 'Not Started',
+    ForLabToInitiate = 'For Lab To Initiate',
+    ByLabInitiated = 'By Lab Initiated',
+    ReadyToStart = 'Ready To Start',
     InProgress = 'In Progress',
+    ForLabToControl = 'For Lab To Control',
     ToAcknowledge = 'To Acknowledge',
     Archived = 'Archived',
     Completed = "Completed",
@@ -31,18 +34,18 @@ export class Order {
     @Column({
         type: 'enum',
         enum: OrderStatus,
-        default: OrderStatus.NotStarted,
+        default: OrderStatus.ReadyToStart,
     })
     status!: OrderStatus;
 
-    @Column()
-    recipeDate!: string;
+    @Column({ nullable: true })
+    recipeDate?: string;
 
-    @Column()
-    applicationDate!: string;
+    @Column({ nullable: true })
+    applicationDate?: string;
 
-    @ManyToOne(() => Operator, { eager: true })
-    operator!: Operator;
+    @ManyToOne(() => Operator, { eager: true, nullable: true })
+    operator?: Operator | null;
 
     @ManyToOne(() => Crop, { eager: true })
     crop!: Crop;
@@ -54,8 +57,8 @@ export class Order {
      * The thousand kernel weight in grams.
      * In the spreadsheet, [I10].
      */
-    @Column('float')
-    tkw!: number;
+    @Column('float', { nullable: true })
+    tkw?: number;
 
     /**
      * The seedsToTreatKg of the order in kilograms.
@@ -68,8 +71,8 @@ export class Order {
      * The extra slurry percentage.
      * In the spreadsheet, [O10].
      */
-    @Column('float')
-    extraSlurry!: number;
+    @Column('float', { nullable: true })
+    extraSlurry?: number;
 
     /**
      * The packaging type.
@@ -79,22 +82,23 @@ export class Order {
         type: 'enum',
         enum: Packaging,
         default: Packaging.InSeeds,
+        nullable: true,
     })
-    packaging!: Packaging;
+    packaging?: Packaging;
 
     /**
      * The size of the bag in kilograms or in thousand of seeds, depends on the packaging.
      * In the spreadsheet, [L10].
      */
-    @Column('float')
-    bagSize!: number;
+    @Column('float', { nullable: true })
+    bagSize?: number;
 
     @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
     productDetails!: ProductDetail[];
 
-    @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true })
-    orderExecution!: OrderExecution;
+    @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true, nullable: true })
+    orderExecution?: OrderExecution;
 
-    @OneToOne(() => OrderRecipe, (orderRecipe) => orderRecipe.order, { cascade: true })
-    orderRecipe!: OrderRecipe;
+    @OneToOne(() => OrderRecipe, (orderRecipe) => orderRecipe.order, { cascade: true, nullable: true })
+    orderRecipe?: OrderRecipe;
 }
