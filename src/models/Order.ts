@@ -53,31 +53,24 @@ export class Order {
     @ManyToOne(() => Variety, { eager: true })
     variety!: Variety;
 
-    /**
-     * The thousand kernel weight in grams.
-     * In the spreadsheet, [I10].
-     */
     @Column('float', { nullable: true })
     tkw?: number;
 
-    /**
-     * The seedsToTreatKg of the order in kilograms.
-     * In the spreadsheet, [O6].
-     */
+    @Column('float', { nullable: true })
+    tkwRep1?: number;
+
+    @Column('float', { nullable: true })
+    tkwRep2?: number;
+
+    @Column('float', { nullable: true })
+    tkwRep3?: number;
+
     @Column('float')
     seedsToTreatKg!: number;
 
-    /**
-     * The extra slurry percentage.
-     * In the spreadsheet, [O10].
-     */
     @Column('float', { nullable: true })
     extraSlurry?: number;
 
-    /**
-     * The packaging type.
-     * Not represented in the spreadsheet.
-     */
     @Column({
         type: 'enum',
         enum: Packaging,
@@ -86,10 +79,6 @@ export class Order {
     })
     packaging?: Packaging;
 
-    /**
-     * The size of the bag in kilograms or in thousand of seeds, depends on the packaging.
-     * In the spreadsheet, [L10].
-     */
     @Column('float', { nullable: true })
     bagSize?: number;
 

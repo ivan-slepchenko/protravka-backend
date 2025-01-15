@@ -194,6 +194,27 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
   }
 });
 
+app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tkwRep1, tkwRep2, tkwRep3, tkw } = req.body;
+    const order = await AppDataSource.getRepository(Order).findOneBy({ id });
+    if (order) {
+      order.tkwRep1 = tkwRep1;
+      order.tkwRep2 = tkwRep2;
+      order.tkwRep3 = tkwRep3;
+      order.tkw = tkw;
+      await AppDataSource.getRepository(Order).save(order);
+      res.json(order);
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error) {
+    logger.error('Failed to update order TKW values:', error);
+    res.status(500).json({ error: 'Failed to update order TKW values' });
+  }
+});
+
 app.delete('/api/orders/:id', verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
