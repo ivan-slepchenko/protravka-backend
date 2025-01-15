@@ -82,6 +82,9 @@ export class Order {
     @Column('float', { nullable: true })
     bagSize?: number;
 
+    @Column('text', { nullable: true })
+    tkwProbesPhoto?: string; // Add tkwProbesPhoto column
+
     @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
     productDetails!: ProductDetail[];
 
