@@ -233,7 +233,7 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
             order.tkwRep3 = tkwRep3;
             order.tkw = tkw;
             order.tkwProbesPhoto = tkwProbesPhoto; // Update tkwProbesPhoto
-            order.status = OrderStatus.ReadyToStart; // Update status to ReadyToStart
+            order.status = OrderStatus.ByLabInitiated; // Update status to ReadyToStart
             await AppDataSource.getRepository(Order).save(order);
             res.json(order);
         } else {
