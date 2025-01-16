@@ -245,6 +245,59 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
     }
 });
 
+app.put('/api/orders/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
+
+        const operator =
+            operatorId === undefined
+                ? null
+                : await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
+        const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
+        const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId });
+
+        if ((!operator && operatorId !== undefined) || !crop || !variety) {
+            res.status(400).json({
+                error: 'Invalid operator, crop, or variety ID',
+                message: 'Invalid operator, crop, or variety ID',
+            });
+        } else {
+            const productDetailsWithProduct = await Promise.all(
+                productDetails.map(async (detail: any) => {
+                    const product = await AppDataSource.getRepository(Product).findOneBy({
+                        id: detail.productId,
+                    });
+                    if (!product) {
+                        throw new Error(`Invalid product ID: ${detail.productId}`);
+                    }
+                    return { ...detail, product };
+                }),
+            );
+
+            const order = await AppDataSource.getRepository(Order).findOneBy({ id });
+            if (!order) {
+                res.status(404).json({ error: 'Order not found' });
+                return;
+            }
+
+            AppDataSource.getRepository(Order).merge(order, {
+                ...(orderData as Partial<Order>),
+                operator,
+                crop,
+                variety,
+                productDetails: productDetailsWithProduct,
+            });
+
+            const updatedOrder = await AppDataSource.getRepository(Order).save(order);
+            res.json(updatedOrder);
+        }
+    } catch (error) {
+        logger.error('Failed to update order:', error);
+        res.status(500).json({ error: 'Failed to update order', message: error });
+    }
+});
+
 app.delete('/api/orders/:id', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
@@ -258,6 +311,34 @@ app.delete('/api/orders/:id', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to delete order:', error);
         res.status(500).json({ error: 'Failed to delete order' });
+    }
+});
+
+app.get('/api/orders/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await AppDataSource.getRepository(Order).findOne({
+            where: { id },
+            relations: [
+                'productDetails',
+                'productDetails.product',
+                'operator',
+                'crop',
+                'variety',
+                'orderRecipe',
+                'orderRecipe.productRecipes',
+                'orderRecipe.productRecipes.productDetail',
+                'orderRecipe.productRecipes.productDetail.product',
+            ],
+        });
+        if (order) {
+            res.json(order);
+        } else {
+            res.status(404).json({ error: 'Order not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch order:', error);
+        res.status(500).json({ error: 'Failed to fetch order' });
     }
 });
 
