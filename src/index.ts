@@ -287,6 +287,7 @@ app.put('/api/orders/:id/finalize', verifyToken, async (req, res) => {
                 crop,
                 variety,
                 productDetails: productDetailsWithProduct,
+                status: OrderStatus.ReadyToStart,
             });
 
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
@@ -688,6 +689,23 @@ app.post(
         }
     },
 );
+
+app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
+        if (order) {
+            order.treatmentStart = new Date().getTime();
+            await AppDataSource.getRepository(Order).save(order);
+            res.json(order);
+        } else {
+            res.status(404).json({ error: 'Order not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to start order:', error);
+        res.status(500).json({ error: 'Failed to start order' });
+    }
+});
 
 app.get('/api/executions/user-order-executions', verifyToken, async (req, res) => {
     try {

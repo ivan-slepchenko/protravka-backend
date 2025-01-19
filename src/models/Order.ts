@@ -14,13 +14,13 @@ export enum OrderStatus {
     ForLabToControl = 'For Lab To Control',
     ToAcknowledge = 'To Acknowledge',
     Archived = 'Archived',
-    Completed = "Completed",
-    Failed = "Failed",
+    Completed = 'Completed',
+    Failed = 'Failed',
 }
 
 export enum Packaging {
-  InSeeds = 'inSeeds',
-  InKg = 'inKg',
+    InSeeds = 'inSeeds',
+    InKg = 'inKg',
 }
 
 @Entity()
@@ -82,15 +82,24 @@ export class Order {
     @Column('float', { nullable: true })
     bagSize?: number;
 
+    @Column('float', { nullable: true })
+    treatmentStart?: number;
+
     @Column('text', { nullable: true })
     tkwProbesPhoto?: string; // Add tkwProbesPhoto column
 
     @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
     productDetails!: ProductDetail[];
 
-    @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, { cascade: true, nullable: true })
+    @OneToOne(() => OrderExecution, (orderExecution) => orderExecution.order, {
+        cascade: true,
+        nullable: true,
+    })
     orderExecution?: OrderExecution;
 
-    @OneToOne(() => OrderRecipe, (orderRecipe) => orderRecipe.order, { cascade: true, nullable: true })
+    @OneToOne(() => OrderRecipe, (orderRecipe) => orderRecipe.order, {
+        cascade: true,
+        nullable: true,
+    })
     orderRecipe?: OrderRecipe;
 }
