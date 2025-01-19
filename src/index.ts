@@ -245,7 +245,7 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
     }
 });
 
-app.put('/api/orders/:id', verifyToken, async (req, res) => {
+app.put('/api/orders/:id/finalize', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
@@ -289,8 +289,39 @@ app.put('/api/orders/:id', verifyToken, async (req, res) => {
                 productDetails: productDetailsWithProduct,
             });
 
-            const updatedOrder = await AppDataSource.getRepository(Order).save(order);
-            res.json(updatedOrder);
+            const savedOrder = await AppDataSource.getRepository(Order).save(order);
+
+            const orderRecipeData = createOrderRecipe(savedOrder);
+            if (orderRecipeData === undefined) {
+                logger.error('Invalid order recipe data:', orderRecipeData);
+                res.status(400).json({
+                    error: 'Invalid order recipe data',
+                    message: 'Invalid order recipe data',
+                });
+            } else {
+                const productRecipes = orderRecipeData.productRecipes.map((recipeData) =>
+                    AppDataSource.getRepository(ProductRecipe).create(recipeData),
+                );
+                await AppDataSource.getRepository(ProductRecipe).save(productRecipes);
+
+                const orderRecipe = AppDataSource.getRepository(OrderRecipe).create({
+                    ...orderRecipeData,
+                    productRecipes,
+                });
+
+                const savedRecipe =
+                    await AppDataSource.getRepository(OrderRecipe).save(orderRecipe);
+
+                savedOrder.orderRecipe = savedRecipe;
+
+                logger.debug('Order Data:', savedOrder);
+
+                const updatedOrder = await AppDataSource.getRepository(Order).save(savedOrder);
+
+                logger.debug('Updated Order:', updatedOrder);
+
+                res.status(201).json(updatedOrder);
+            }
         }
     } catch (error) {
         logger.error('Failed to update order:', error);
