@@ -1,41 +1,57 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToMany,
+    OneToOne,
+    JoinColumn,
+    ManyToOne,
+} from 'typeorm';
 import { Order } from './Order';
 import { ProductExecution } from './ProductExecution';
 import { Operator } from './Operator';
+import { TkwMeasurement } from './TkwMeasurement';
 
 @Entity()
 export class OrderExecution {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-  @OneToOne(() => Order, (order) => order.orderExecution)
-  @JoinColumn() // Specify that OrderExecution owns the relationship with Order
-  order!: Order;
- 
-  @ManyToOne(() => Operator, (operator) => operator.orderExecutions)
-  operator!: Operator;
+    @OneToOne(() => Order, (order) => order.orderExecution)
+    @JoinColumn() // Specify that OrderExecution owns the relationship with Order
+    order!: Order;
 
-  @OneToMany(() => ProductExecution, (productExecution) => productExecution.orderExecution, { cascade: true })
-  productExecutions!: ProductExecution[];
+    @ManyToOne(() => Operator, (operator) => operator.orderExecutions)
+    operator!: Operator;
 
-  @Column({ nullable: true })
-  applicationMethod!: string;
+    @OneToMany(() => ProductExecution, (productExecution) => productExecution.orderExecution, {
+        cascade: true,
+    })
+    productExecutions!: ProductExecution[];
 
-  @Column({ nullable: true })
-  packingPhoto!: string;
+    @OneToMany(() => TkwMeasurement, (tkwMeasurement) => tkwMeasurement.orderExecution, {
+        cascade: true,
+    })
+    tkwMeasurements!: TkwMeasurement[];
 
-  @Column({ nullable: true })
-  consumptionPhoto!: string;
+    @Column({ nullable: true })
+    applicationMethod!: string;
 
-  @Column('float', { nullable: true })
-  packedseedsToTreatKg!: number;
+    @Column({ nullable: true })
+    packingPhoto!: string;
 
-  @Column('float', { nullable: true })
-  slurryConsumptionPerLotKg!: number;
+    @Column({ nullable: true })
+    consumptionPhoto!: string;
 
-  @Column({ nullable: true })
-  currentPage!: number;
+    @Column('float', { nullable: true })
+    packedseedsToTreatKg!: number;
 
-  @Column('int', { nullable: true })
-  currentProductIndex!: number;
+    @Column('float', { nullable: true })
+    slurryConsumptionPerLotKg!: number;
+
+    @Column({ nullable: true })
+    currentPage!: number;
+
+    @Column('int', { nullable: true })
+    currentProductIndex!: number;
 }
