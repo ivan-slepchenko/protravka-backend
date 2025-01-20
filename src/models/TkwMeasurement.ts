@@ -23,4 +23,7 @@ export class TkwMeasurement {
 
     @Column('float', { nullable: true })
     tkwProbe3?: number;
+
+    @Column('text', { nullable: true })
+    tkwProbesPhoto?: string;
 }
