@@ -46,12 +46,12 @@ export const AppDataSource = new DataSource({
         Crop,
         Variety,
         Product,
+        TkwMeasurement,
         OrderExecution,
         ProductExecution,
         OrderRecipe,
         ProductRecipe,
-        TkwMeasurement,
-    ], // Ensure Operator entity is included
+    ],
     synchronize: true,
 });
 
@@ -237,14 +237,15 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
 app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
-        const { tkwRep1, tkwRep2, tkwRep3, tkw, tkwProbesPhoto } = req.body;
+        const { tkwRep1, tkwRep2, tkwRep3, tkwProbesPhoto } = req.body;
         const order = await AppDataSource.getRepository(Order).findOneBy({ id });
         if (order) {
             order.tkwRep1 = tkwRep1;
             order.tkwRep2 = tkwRep2;
             order.tkwRep3 = tkwRep3;
-            order.tkwProbesPhoto = tkwProbesPhoto; // Update tkwProbesPhoto
-            order.status = OrderStatus.ByLabInitiated; // Update status to ReadyToStart
+            order.tkw = (tkwRep1 + tkwRep2 + tkwRep3) / 3;
+            order.tkwProbesPhoto = tkwProbesPhoto;
+            order.status = OrderStatus.ByLabInitiated;
             await AppDataSource.getRepository(Order).save(order);
             res.json(order);
         } else {
@@ -814,7 +815,25 @@ app.get('/api/tkw-measurements', verifyToken, async (req, res) => {
             where: { probeDate: undefined },
             relations: ['orderExecution', 'orderExecution.order'],
         });
-        res.json(tkwMeasurements);
+        const response = tkwMeasurements.map((measurement) => ({
+            ...measurement,
+            orderExecution: {
+                ...measurement.orderExecution,
+                orderId: measurement.orderExecution.order.id,
+            },
+        }));
+        res.json(
+            response.map(({ orderExecution, ...rest }) => {
+                const { order, ...orderExecutionData } = orderExecution;
+                return {
+                    ...rest,
+                    orderExecution: {
+                        ...orderExecutionData,
+                        orderId: order.id,
+                    },
+                };
+            }),
+        );
     } catch (error) {
         logger.error('Failed to fetch TKW measurements:', error);
         res.status(500).json({ error: 'Failed to fetch TKW measurements' });
@@ -857,7 +876,11 @@ if (process.env.NODE_ENV !== 'test') {
         logger.debug(`DB_PASSWORD: ${process.env.DB_PASSWORD}`);
         logger.debug(`DB_NAME: ${process.env.DB_NAME}`);
         AppDataSource.initialize()
-            .then(() => logger.info('Database connected'))
+            .then(async () => {
+                logger.info('Database connected');
+                await checkAndCreateTkwMeasurements();
+                console.log('Checked and created TKW measurements on startup after 10 seconds.');
+            })
             .catch((err: any) => logger.error('Unable to connect to the database:', err));
     });
 }
