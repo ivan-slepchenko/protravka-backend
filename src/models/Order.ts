@@ -82,11 +82,11 @@ export class Order {
     @Column('float', { nullable: true })
     bagSize?: number;
 
-    @Column('float', { nullable: true })
-    treatmentStart?: number;
-
     @Column('text', { nullable: true })
     tkwProbesPhoto?: string; // Add tkwProbesPhoto column
+
+    @Column('int', { default: 60 })
+    tkwMeasurementInterval!: number;
 
     @OneToMany(() => ProductDetail, (productDetail) => productDetail.order, { cascade: true })
     productDetails!: ProductDetail[];

@@ -1,12 +1,11 @@
-import { getRepository } from 'typeorm';
 import { OrderExecution } from '../models/OrderExecution';
 import { TkwMeasurement } from '../models/TkwMeasurement';
 import { OrderStatus } from '../models/Order';
+import { AppDataSource } from '..';
 
-async function checkAndCreateTkwMeasurements() {
-    //TODO: fix deprecation
-    const orderExecutionRepository = getRepository(OrderExecution);
-    const tkwMeasurementRepository = getRepository(TkwMeasurement);
+export async function checkAndCreateTkwMeasurements() {
+    const orderExecutionRepository = AppDataSource.getRepository(OrderExecution);
+    const tkwMeasurementRepository = AppDataSource.getRepository(TkwMeasurement);
 
     const orderExecutions = await orderExecutionRepository.find({
         where: { order: { status: OrderStatus.InProgress } },
@@ -23,10 +22,11 @@ async function checkAndCreateTkwMeasurements() {
 
         const lastProbeTime = lastMeasurement
             ? lastMeasurement.creationDate
-            : orderExecution.order.treatmentStart; //TODO: move treatment start from order to order execution
+            : orderExecution.treatmentStart;
         const timeDiff = lastProbeTime ? now.getTime() - new Date(lastProbeTime).getTime() : null; // It may happen that treatment is not started yet for Order in progress.
+        const interval = orderExecution.order.tkwMeasurementInterval * 60000; // Convert minutes to milliseconds
 
-        if (timeDiff !== null && timeDiff >= 3600000) {
+        if (timeDiff !== null && timeDiff >= interval) {
             // 1 hour in milliseconds
             const newMeasurement = new TkwMeasurement();
             newMeasurement.creationDate = now;
@@ -35,5 +35,3 @@ async function checkAndCreateTkwMeasurements() {
         }
     }
 }
-
-setInterval(checkAndCreateTkwMeasurements, 600000); // Run every 10 minutes

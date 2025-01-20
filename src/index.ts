@@ -22,6 +22,9 @@ import { ProductExecution } from './models/ProductExecution';
 import { OrderRecipe } from './models/OrderRecipe';
 import { ProductRecipe } from './models/ProductRecipe';
 import { createOrderRecipe } from './calculator/calculator';
+import { TkwMeasurement } from './models/TkwMeasurement';
+import cron from 'node-cron';
+import { checkAndCreateTkwMeasurements } from './daemon/TkwMeasurementDaemon';
 
 console.log('Version:', version);
 
@@ -47,6 +50,7 @@ export const AppDataSource = new DataSource({
         ProductExecution,
         OrderRecipe,
         ProductRecipe,
+        TkwMeasurement,
     ], // Ensure Operator entity is included
     synchronize: true,
 });
@@ -128,7 +132,14 @@ app.get('/features', (req, res) => {
 
 app.post('/api/orders', verifyToken, async (req, res) => {
     try {
-        const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
+        const {
+            productDetails,
+            operatorId,
+            cropId,
+            varietyId,
+            tkwMeasurementInterval,
+            ...orderData
+        } = req.body;
 
         const operator =
             operatorId === undefined
@@ -161,6 +172,7 @@ app.post('/api/orders', verifyToken, async (req, res) => {
                 crop,
                 variety,
                 productDetails: productDetailsWithProduct,
+                tkwMeasurementInterval: tkwMeasurementInterval || 60, // Default to 60 if not provided
             });
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
@@ -693,17 +705,21 @@ app.post(
 app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
     try {
         const { orderId } = req.params;
-        const order = await AppDataSource.getRepository(Order).findOneBy({ id: orderId });
-        if (order) {
-            order.treatmentStart = new Date().getTime();
-            await AppDataSource.getRepository(Order).save(order);
-            res.json(order);
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+            where: { order: { id: orderId } },
+            relations: ['order'],
+        });
+
+        if (orderExecution) {
+            orderExecution.treatmentStart = new Date().getTime();
+            await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+            res.json(orderExecution);
         } else {
-            res.status(404).json({ error: 'Order not found' });
+            res.status(404).json({ error: 'Order execution not found' });
         }
     } catch (error) {
-        logger.error('Failed to start order:', error);
-        res.status(500).json({ error: 'Failed to start order' });
+        logger.error('Failed to start order execution:', error);
+        res.status(500).json({ error: 'Failed to start order execution' });
     }
 });
 
@@ -806,5 +822,10 @@ if (process.env.NODE_ENV !== 'test') {
             .catch((err: any) => logger.error('Unable to connect to the database:', err));
     });
 }
+
+cron.schedule('*/10 * * * *', async () => {
+    await checkAndCreateTkwMeasurements();
+    console.log('Checked and created TKW measurements.');
+});
 
 export default app;
