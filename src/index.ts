@@ -840,30 +840,26 @@ app.get('/api/tkw-measurements', verifyToken, async (req, res) => {
     }
 });
 
-app.post('/api/tkw-measurements', verifyToken, async (req, res) => {
+app.put('/api/tkw-measurements/:id', verifyToken, async (req, res) => {
     try {
-        const { orderExecutionId, tkwRep1, tkwRep2, tkwRep3, tkw, tkwProbesPhoto } = req.body;
-        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOneBy({
-            id: orderExecutionId,
-        });
-        if (!orderExecution) {
-            res.status(404).json({ error: 'Order execution not found' });
+        const { id } = req.params;
+        const { tkwRep1, tkwRep2, tkwRep3, tkwProbesPhoto } = req.body;
+        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOneBy({ id });
+        if (!tkwMeasurement) {
+            res.status(404).json({ error: 'TKW measurement not found' });
         } else {
-            const tkwMeasurement = AppDataSource.getRepository(TkwMeasurement).create({
-                orderExecution,
-                tkwProbe1: tkwRep1,
-                tkwProbe2: tkwRep2,
-                tkwProbe3: tkwRep3,
-                tkwProbesPhoto,
-                creationDate: new Date(),
-            });
-            const savedTkwMeasurement =
+            tkwMeasurement.tkwProbe1 = tkwRep1;
+            tkwMeasurement.tkwProbe2 = tkwRep2;
+            tkwMeasurement.tkwProbe3 = tkwRep3;
+            tkwMeasurement.tkwProbesPhoto = tkwProbesPhoto;
+            tkwMeasurement.probeDate = new Date();
+            const updatedTkwMeasurement =
                 await AppDataSource.getRepository(TkwMeasurement).save(tkwMeasurement);
-            res.status(201).json(savedTkwMeasurement);
+            res.json(updatedTkwMeasurement);
         }
     } catch (error) {
-        logger.error('Failed to save TKW measurement:', error);
-        res.status(500).json({ error: 'Failed to save TKW measurement' });
+        logger.error('Failed to update TKW measurement:', error);
+        res.status(500).json({ error: 'Failed to update TKW measurement' });
     }
 });
 
