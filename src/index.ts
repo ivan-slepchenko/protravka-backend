@@ -815,25 +815,17 @@ app.get('/api/tkw-measurements', verifyToken, async (req, res) => {
             where: { probeDate: undefined },
             relations: ['orderExecution', 'orderExecution.order'],
         });
-        const response = tkwMeasurements.map((measurement) => ({
-            ...measurement,
-            orderExecution: {
-                ...measurement.orderExecution,
-                orderId: measurement.orderExecution.order.id,
-            },
-        }));
-        res.json(
-            response.map(({ orderExecution, ...rest }) => {
-                const { order, ...orderExecutionData } = orderExecution;
-                return {
-                    ...rest,
-                    orderExecution: {
-                        ...orderExecutionData,
-                        orderId: order.id,
-                    },
-                };
-            }),
-        );
+        const response = tkwMeasurements.map((measurement) => {
+            const { order, ...orderExecutionData } = measurement.orderExecution;
+            return {
+                ...measurement,
+                orderExecution: {
+                    ...orderExecutionData,
+                    orderId: order.id,
+                },
+            };
+        });
+        res.json(response);
     } catch (error) {
         logger.error('Failed to fetch TKW measurements:', error);
         res.status(500).json({ error: 'Failed to fetch TKW measurements' });
