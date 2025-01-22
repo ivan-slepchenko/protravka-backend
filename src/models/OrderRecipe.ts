@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToOne,
+    OneToMany,
+    JoinColumn,
+    Index,
+} from 'typeorm';
 import { Order } from './Order';
 import { ProductRecipe } from './ProductRecipe';
 
@@ -7,6 +15,7 @@ export class OrderRecipe {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
+    @Index()
     @OneToOne(() => Order, (order) => order.orderRecipe)
     @JoinColumn() // Specify that OrderRecipe owns the relationship with Order
     order!: Order;

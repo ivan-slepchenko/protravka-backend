@@ -6,6 +6,7 @@ import {
     OneToOne,
     JoinColumn,
     ManyToOne,
+    Index,
 } from 'typeorm';
 import { Order } from './Order';
 import { ProductExecution } from './ProductExecution';
@@ -17,10 +18,12 @@ export class OrderExecution {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
+    @Index()
     @OneToOne(() => Order, (order) => order.orderExecution)
     @JoinColumn() // Specify that OrderExecution owns the relationship with Order
     order!: Order;
 
+    @Index()
     @ManyToOne(() => Operator, (operator) => operator.orderExecutions)
     operator!: Operator;
 

@@ -1,16 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 
 @Entity()
 export class Product {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+    @PrimaryGeneratedColumn('uuid')
+    id!: string;
 
-  @Column()
-  name!: string;
+    @Index()
+    @Column()
+    name!: string;
 
-  @Column({ nullable: true })
-  activeIngredient?: string;
+    @Column({ nullable: true })
+    activeIngredient?: string;
 
-  @Column('float')
-  density!: number;
+    @Index()
+    @Column('float')
+    density!: number;
 }

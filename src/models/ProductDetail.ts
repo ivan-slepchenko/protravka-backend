@@ -6,12 +6,11 @@ export enum RateUnit {
     ML = 'ml',
     G = 'g',
 }
-  
+
 export enum RateType {
     Unit = 'unit',
     Per100Kg = '100kg',
 }
-  
 
 @Entity()
 export class ProductDetail {
@@ -41,5 +40,4 @@ export class ProductDetail {
 
     @Column('int')
     index!: number; // Add index column
-
 }

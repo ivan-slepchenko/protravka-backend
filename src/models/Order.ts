@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne, OneToOne } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToMany,
+    ManyToOne,
+    OneToOne,
+    Index,
+} from 'typeorm';
 import { ProductDetail } from './ProductDetail';
 import { Operator } from './Operator';
 import { Crop } from './Crop';
@@ -31,6 +39,7 @@ export class Order {
     @Column()
     lotNumber!: string;
 
+    @Index()
     @Column({
         type: 'enum',
         enum: OrderStatus,
@@ -38,12 +47,15 @@ export class Order {
     })
     status!: OrderStatus;
 
+    @Index()
     @Column({ nullable: true })
     recipeDate?: string;
 
+    @Index()
     @Column({ nullable: true })
     applicationDate?: string;
 
+    @Index()
     @ManyToOne(() => Operator, { eager: true, nullable: true })
     operator?: Operator | null;
 

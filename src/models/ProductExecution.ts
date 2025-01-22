@@ -1,5 +1,4 @@
-
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, Index } from 'typeorm';
 import { OrderExecution } from './OrderExecution';
 
 @Entity()
@@ -10,6 +9,7 @@ export class ProductExecution {
     @ManyToOne(() => OrderExecution, (orderExecution) => orderExecution.productExecutions)
     orderExecution!: OrderExecution;
 
+    @Index()
     @Column()
     productId!: string;
 

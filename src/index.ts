@@ -810,11 +810,19 @@ app.post('/api/calculate-order', verifyToken, async (req, res) => {
 });
 
 app.get('/api/tkw-measurements', verifyToken, async (req, res) => {
+    const start = Date.now();
     try {
+        logger.debug(`Starting TKW measurements fetch process at ${new Date().toISOString()}`);
+
+        const queryStart = Date.now();
         const tkwMeasurements = await AppDataSource.getRepository(TkwMeasurement).find({
             where: { probeDate: undefined },
             relations: ['orderExecution', 'orderExecution.order'],
         });
+        const queryEnd = Date.now();
+        logger.debug(`TKW measurements DB query took ${queryEnd - queryStart} ms`);
+
+        const mapStart = Date.now();
         const response = tkwMeasurements.map((measurement) => {
             const { order, ...orderExecutionData } = measurement.orderExecution;
             return {
@@ -825,7 +833,13 @@ app.get('/api/tkw-measurements', verifyToken, async (req, res) => {
                 },
             };
         });
-        res.json(response);
+        const mapEnd = Date.now();
+        logger.debug(`Mapping TKW measurements took ${mapEnd - mapStart} ms`);
+
+        const totalTime = Date.now() - start;
+        logger.debug(`TKW measurements request completed in ${totalTime} ms`);
+
+        res.status(200).json(response);
     } catch (error) {
         logger.error('Failed to fetch TKW measurements:', error);
         res.status(500).json({ error: 'Failed to fetch TKW measurements' });
