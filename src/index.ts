@@ -757,6 +757,19 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
         const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
             where: { order: { id: orderId } },
             relations: ['productExecutions'],
+            select: [
+                'id',
+                'order',
+                'operator',
+                'applicationMethod',
+                'packedseedsToTreatKg',
+                'slurryConsumptionPerLotKg',
+                'currentPage',
+                'currentProductIndex',
+                'treatmentStart',
+                'consumptionPhoto',
+                'packingPhoto',
+            ],
         });
 
         if (orderExecution) {

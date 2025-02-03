@@ -40,10 +40,10 @@ export class OrderExecution {
     @Column({ nullable: true })
     applicationMethod!: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, select: false })
     packingPhoto!: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, select: false })
     consumptionPhoto!: string;
 
     @Column('float', { nullable: true })
