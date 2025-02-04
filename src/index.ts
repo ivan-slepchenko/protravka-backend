@@ -24,7 +24,10 @@ import { ProductRecipe } from './models/ProductRecipe';
 import { createOrderRecipe } from './calculator/calculator';
 import { TkwMeasurement } from './models/TkwMeasurement';
 import cron from 'node-cron';
-import { checkAndCreateTkwMeasurements } from './daemon/TkwMeasurementDaemon';
+import {
+    checkAndCreateTkwMeasurements,
+    checkAndCreateTkwMeasurementsForOrderExecution,
+} from './daemon/TkwMeasurementDaemon';
 
 console.log('Version:', version);
 
@@ -224,6 +227,15 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
         if (order) {
             order.status = status;
             await AppDataSource.getRepository(Order).save(order);
+
+            if (status === OrderStatus.ForLabToControl) {
+                const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+                    where: { order: { id } },
+                });
+                if (orderExecution) {
+                    checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
+                }
+            }
             res.json(order);
         } else {
             res.status(404).json({ error: 'Order not found' });
@@ -759,7 +771,6 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
             relations: ['productExecutions'],
             select: [
                 'id',
-                'order',
                 'operator',
                 'applicationMethod',
                 'packedseedsToTreatKg',
@@ -773,7 +784,10 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
         });
 
         if (orderExecution) {
-            res.json(orderExecution);
+            res.json({
+                ...orderExecution,
+                orderId,
+            });
         } else {
             res.status(404).json({ error: 'Order execution not found' });
         }
