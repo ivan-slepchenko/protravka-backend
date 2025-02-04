@@ -9,7 +9,6 @@ export async function checkAndCreateTkwMeasurements() {
     logger.info('Starting TKW measurement check and creation process.');
 
     const orderExecutionRepository = AppDataSource.getRepository(OrderExecution);
-    const tkwMeasurementRepository = AppDataSource.getRepository(TkwMeasurement);
 
     try {
         const orderExecutions = await orderExecutionRepository.find({
