@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import { Order, OrderStatus } from './models/Order';
 import 'reflect-metadata';
-import { Not } from 'typeorm';
+import { IsNull, Not } from 'typeorm';
 import log4js from 'log4js';
 import fs from 'fs';
 import path from 'path';
@@ -877,7 +877,10 @@ app.put('/api/tkw-measurements/:id', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { tkwRep1, tkwRep2, tkwRep3, tkwProbesPhoto } = req.body;
-        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOneBy({ id });
+        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOne({
+            where: { id },
+            relations: ['orderExecution', 'orderExecution.order'],
+        });
         if (!tkwMeasurement) {
             res.status(404).json({ error: 'TKW measurement not found' });
         } else {
@@ -888,6 +891,36 @@ app.put('/api/tkw-measurements/:id', verifyToken, async (req, res) => {
             tkwMeasurement.probeDate = new Date();
             const updatedTkwMeasurement =
                 await AppDataSource.getRepository(TkwMeasurement).save(tkwMeasurement);
+
+            const orderRepository = AppDataSource.getRepository(Order);
+            const order = await orderRepository.findOne({
+                where: { id: tkwMeasurement.orderExecution.order.id },
+            });
+            if (order) {
+                if (order.status === OrderStatus.ForLabToControl) {
+                    const incompleteMeasurements = await AppDataSource.getRepository(
+                        TkwMeasurement,
+                    ).find({
+                        where: {
+                            orderExecution: { order: { id: order.id } },
+                            probeDate: IsNull(),
+                        },
+                    });
+
+                    if (incompleteMeasurements.length === 0) {
+                        order.status = OrderStatus.ToAcknowledge;
+                        await orderRepository.save(order);
+                        logger.info(
+                            `Order status updated to ToAcknowledge for order ID: ${order.id}`,
+                        );
+                    } else {
+                        console.log('Incomplete measurements:', incompleteMeasurements);
+                    }
+                }
+            } else {
+                res.status(404).json({ error: 'Order not found' });
+            }
+
             res.json(updatedTkwMeasurement);
         }
     } catch (error) {
