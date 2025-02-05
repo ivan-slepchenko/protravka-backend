@@ -14,7 +14,7 @@ export async function checkAndCreateTkwMeasurements() {
         const orderExecutions = await orderExecutionRepository.find({
             where: {
                 order: {
-                    status: In([OrderStatus.InProgress]),
+                    status: In([OrderStatus.TreatmentInProgress]),
                 },
             },
             relations: ['order'],
@@ -47,7 +47,7 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
 
     const lastProbeTime = lastMeasurement
         ? lastMeasurement.creationDate
-        : orderExecution.treatmentStart;
+        : orderExecution.treatmentStartDate;
     const timeDiff = lastProbeTime ? now.getTime() - new Date(lastProbeTime).getTime() : null; // It may happen that treatment is not started yet for Order in progress.
     const interval = orderExecution.order.tkwMeasurementInterval * 60000; // Convert minutes to milliseconds
 

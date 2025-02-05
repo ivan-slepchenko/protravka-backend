@@ -176,6 +176,7 @@ app.post('/api/orders', verifyToken, async (req, res) => {
                 variety,
                 productDetails: productDetailsWithProduct,
                 tkwMeasurementInterval: tkwMeasurementInterval || 60, // Default to 60 if not provided
+                creationDate: new Date().getTime(),
             });
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
@@ -228,7 +229,7 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
             order.status = status;
             await AppDataSource.getRepository(Order).save(order);
 
-            if (status === OrderStatus.ForLabToControl) {
+            if (status === OrderStatus.LabControl) {
                 const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
                     where: { order: { id } },
                 });
@@ -257,7 +258,7 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
             order.tkwRep3 = tkwRep3;
             order.tkw = (tkwRep1 + tkwRep2 + tkwRep3) / 3;
             order.tkwProbesPhoto = tkwProbesPhoto;
-            order.status = OrderStatus.ByLabInitiated;
+            order.status = OrderStatus.TKWConfirmed;
             await AppDataSource.getRepository(Order).save(order);
             res.json(order);
         } else {
@@ -311,7 +312,7 @@ app.put('/api/orders/:id/finalize', verifyToken, async (req, res) => {
                 crop,
                 variety,
                 productDetails: productDetailsWithProduct,
-                status: OrderStatus.ReadyToStart,
+                status: OrderStatus.RecipeCreated,
             });
 
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
@@ -723,7 +724,7 @@ app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
         });
 
         if (orderExecution) {
-            orderExecution.treatmentStart = new Date().getTime();
+            orderExecution.treatmentStartDate = new Date().getTime();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
             res.json(orderExecution);
         } else {
@@ -732,6 +733,27 @@ app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to start order execution:', error);
         res.status(500).json({ error: 'Failed to start order execution' });
+    }
+});
+
+app.post('/api/executions/:orderId/finish', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+            where: { order: { id: orderId } },
+            relations: ['order'],
+        });
+
+        if (orderExecution) {
+            orderExecution.treatmentFinishDate = new Date().getTime();
+            await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+            res.json(orderExecution);
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to finish order execution:', error);
+        res.status(500).json({ error: 'Failed to finish order execution' });
     }
 });
 
@@ -777,7 +799,8 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
                 'slurryConsumptionPerLotKg',
                 'currentPage',
                 'currentProductIndex',
-                'treatmentStart',
+                'treatmentStartDate',
+                'treatmentFinishDate',
                 'consumptionPhoto',
                 'packingPhoto',
             ],
@@ -897,7 +920,7 @@ app.put('/api/tkw-measurements/:id', verifyToken, async (req, res) => {
                 where: { id: tkwMeasurement.orderExecution.order.id },
             });
             if (order) {
-                if (order.status === OrderStatus.ForLabToControl) {
+                if (order.status === OrderStatus.LabControl) {
                     const incompleteMeasurements = await AppDataSource.getRepository(
                         TkwMeasurement,
                     ).find({

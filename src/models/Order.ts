@@ -15,11 +15,11 @@ import { OrderExecution } from './OrderExecution';
 import { OrderRecipe } from './OrderRecipe';
 
 export enum OrderStatus {
-    ForLabToInitiate = 'For Lab To Initiate',
-    ByLabInitiated = 'By Lab Initiated',
-    ReadyToStart = 'Ready To Start',
-    InProgress = 'In Progress',
-    ForLabToControl = 'For Lab To Control',
+    LabAssignmentCreated = 'Lab Assignment Created',
+    TKWConfirmed = 'TKW Confirmed',
+    RecipeCreated = 'Recipe Created',
+    TreatmentInProgress = 'Treatment In Progress',
+    LabControl = 'Lab To Control',
     ToAcknowledge = 'To Acknowledge',
     Archived = 'Archived',
     Completed = 'Completed',
@@ -43,17 +43,17 @@ export class Order {
     @Column({
         type: 'enum',
         enum: OrderStatus,
-        default: OrderStatus.ReadyToStart,
+        default: OrderStatus.RecipeCreated,
     })
     status!: OrderStatus;
 
     @Index()
     @Column({ nullable: true })
-    recipeDate?: string;
+    creationDate?: number;
 
     @Index()
     @Column({ nullable: true })
-    applicationDate?: string;
+    applicationDate?: number;
 
     @Index()
     @ManyToOne(() => Operator, { eager: true, nullable: true })

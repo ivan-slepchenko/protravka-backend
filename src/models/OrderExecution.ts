@@ -59,5 +59,8 @@ export class OrderExecution {
     currentProductIndex!: number;
 
     @Column('float', { nullable: true })
-    treatmentStart?: number;
+    treatmentStartDate?: number;
+
+    @Column('float', { nullable: true })
+    treatmentFinishDate?: number;
 }
