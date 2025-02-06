@@ -227,11 +227,17 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
         const order = await AppDataSource.getRepository(Order).findOneBy({ id });
         if (order) {
             order.status = status;
+
+            if (status === OrderStatus.Completed || status === OrderStatus.Failed) {
+                order.completionDate = new Date().getTime();
+            }
+
             await AppDataSource.getRepository(Order).save(order);
 
             if (status === OrderStatus.LabControl) {
                 const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
                     where: { order: { id } },
+                    relations: ['order'],
                 });
                 if (orderExecution) {
                     checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
@@ -259,6 +265,7 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
             order.tkw = (tkwRep1 + tkwRep2 + tkwRep3) / 3;
             order.tkwProbesPhoto = tkwProbesPhoto;
             order.status = OrderStatus.TKWConfirmed;
+            order.tkwMeasurementDate = new Date().getTime();
             await AppDataSource.getRepository(Order).save(order);
             res.json(order);
         } else {
@@ -312,6 +319,7 @@ app.put('/api/orders/:id/finalize', verifyToken, async (req, res) => {
                 crop,
                 variety,
                 productDetails: productDetailsWithProduct,
+                finalizationDate: new Date().getTime(),
                 status: OrderStatus.RecipeCreated,
             });
 
@@ -817,6 +825,65 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to fetch order execution:', error);
         res.status(500).json({ error: 'Failed to fetch order execution' });
+    }
+});
+
+app.get('/api/executions/:orderId/start-date', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+            where: { order: { id: orderId } },
+            select: ['treatmentStartDate'],
+        });
+
+        if (orderExecution) {
+            res.json({ treatmentStartDate: orderExecution.treatmentStartDate });
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch order execution start date:', error);
+        res.status(500).json({ error: 'Failed to fetch order execution start date' });
+    }
+});
+
+app.get('/api/executions/:orderId/finish-date', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution)
+            .createQueryBuilder('OrderExecution')
+            .leftJoinAndSelect('OrderExecution.order', 'order')
+            .where('order.id = :orderId', { orderId })
+            .select(['OrderExecution.id', 'OrderExecution.treatmentFinishDate'])
+            .getOne();
+
+        if (orderExecution) {
+            res.json({ treatmentFinishDate: orderExecution.treatmentFinishDate });
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch order execution finish date:', error);
+        res.status(500).json({ error: 'Failed to fetch order execution finish date' });
+    }
+});
+
+app.get('/api/executions/:orderId/latest-tkw', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOne({
+            where: { orderExecution: { order: { id: orderId } } },
+            order: { creationDate: 'DESC' },
+        });
+
+        if (tkwMeasurement) {
+            res.json({ creationDate: tkwMeasurement.creationDate });
+        } else {
+            res.status(404).json({ error: 'TKW measurement not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch latest TKW measurement date:', error);
+        res.status(500).json({ error: 'Failed to fetch latest TKW measurement date' });
     }
 });
 

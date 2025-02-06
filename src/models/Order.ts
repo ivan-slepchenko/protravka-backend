@@ -48,14 +48,6 @@ export class Order {
     status!: OrderStatus;
 
     @Index()
-    @Column({ nullable: true })
-    creationDate?: number;
-
-    @Index()
-    @Column({ nullable: true })
-    applicationDate?: number;
-
-    @Index()
     @ManyToOne(() => Operator, { eager: true, nullable: true })
     operator?: Operator | null;
 
@@ -114,4 +106,21 @@ export class Order {
         nullable: true,
     })
     orderRecipe?: OrderRecipe;
+
+    @Column('float', { nullable: true })
+    tkwMeasurementDate?: number;
+
+    @Index()
+    @Column('float', { nullable: true })
+    creationDate?: number;
+
+    @Index()
+    @Column('float', { nullable: true })
+    applicationDate?: number;
+
+    @Column('float', { nullable: true })
+    finalizationDate?: number;
+
+    @Column('float', { nullable: true })
+    completionDate?: number;
 }
