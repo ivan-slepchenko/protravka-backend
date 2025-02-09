@@ -831,10 +831,12 @@ app.get('/api/executions/:orderId', verifyToken, async (req, res) => {
 app.get('/api/executions/:orderId/start-date', verifyToken, async (req, res) => {
     try {
         const { orderId } = req.params;
-        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
-            where: { order: { id: orderId } },
-            select: ['treatmentStartDate'],
-        });
+        const orderExecution = await AppDataSource.getRepository(OrderExecution)
+            .createQueryBuilder('OrderExecution')
+            .leftJoinAndSelect('OrderExecution.order', 'order')
+            .where('order.id = :orderId', { orderId })
+            .select(['OrderExecution.id', 'OrderExecution.treatmentStartDate'])
+            .getOne();
 
         if (orderExecution) {
             res.json({ treatmentStartDate: orderExecution.treatmentStartDate });
@@ -871,10 +873,14 @@ app.get('/api/executions/:orderId/finish-date', verifyToken, async (req, res) =>
 app.get('/api/executions/:orderId/latest-tkw', verifyToken, async (req, res) => {
     try {
         const { orderId } = req.params;
-        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOne({
-            where: { orderExecution: { order: { id: orderId } } },
-            order: { creationDate: 'DESC' },
-        });
+        const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement)
+            .createQueryBuilder('tm')
+            .leftJoin('tm.orderExecution', 'oe')
+            .leftJoin('oe.order', 'ord')
+            .where('ord.id = :orderId', { orderId })
+            .select(['tm.id', 'tm.creationDate'])
+            .orderBy('tm.creationDate', 'DESC')
+            .getOne();
 
         if (tkwMeasurement) {
             res.json({ creationDate: tkwMeasurement.creationDate });
