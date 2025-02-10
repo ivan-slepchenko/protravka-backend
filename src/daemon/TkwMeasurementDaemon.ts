@@ -37,7 +37,6 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
     createIfNoOtherMeasurements: boolean = false,
 ) {
     const tkwMeasurementRepository = AppDataSource.getRepository(TkwMeasurement);
-    const orderRepository = AppDataSource.getRepository(Order);
     const now = new Date();
     logger.info(`Checking order execution with ID: ${orderExecution.id}`);
 

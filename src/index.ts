@@ -176,7 +176,7 @@ app.post('/api/orders', verifyToken, async (req, res) => {
                 variety,
                 productDetails: productDetailsWithProduct,
                 tkwMeasurementInterval: tkwMeasurementInterval || 60, // Default to 60 if not provided
-                creationDate: new Date().getTime(),
+                creationDate: Date.now(),
             });
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
@@ -229,7 +229,7 @@ app.put('/api/orders/:id/status', verifyToken, async (req, res) => {
             order.status = status;
 
             if (status === OrderStatus.Completed || status === OrderStatus.Failed) {
-                order.completionDate = new Date().getTime();
+                order.completionDate = Date.now();
             }
 
             await AppDataSource.getRepository(Order).save(order);
@@ -265,7 +265,7 @@ app.put('/api/orders/:id/tkw', verifyToken, async (req, res) => {
             order.tkw = (tkwRep1 + tkwRep2 + tkwRep3) / 3;
             order.tkwProbesPhoto = tkwProbesPhoto;
             order.status = OrderStatus.TKWConfirmed;
-            order.tkwMeasurementDate = new Date().getTime();
+            order.tkwMeasurementDate = Date.now();
             await AppDataSource.getRepository(Order).save(order);
             res.json(order);
         } else {
@@ -319,7 +319,7 @@ app.put('/api/orders/:id/finalize', verifyToken, async (req, res) => {
                 crop,
                 variety,
                 productDetails: productDetailsWithProduct,
-                finalizationDate: new Date().getTime(),
+                finalizationDate: Date.now(),
                 status: OrderStatus.RecipeCreated,
             });
 
@@ -723,6 +723,27 @@ app.post(
     },
 );
 
+app.post('/api/executions/:orderId/praparation-start', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+            where: { order: { id: orderId } },
+            relations: ['order'],
+        });
+
+        if (orderExecution) {
+            orderExecution.preparationStartDate = Date.now();
+            await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+            res.json(orderExecution);
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to start order execution:', error);
+        res.status(500).json({ error: 'Failed to start order execution' });
+    }
+});
+
 app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -732,7 +753,7 @@ app.post('/api/executions/:orderId/start', verifyToken, async (req, res) => {
         });
 
         if (orderExecution) {
-            orderExecution.treatmentStartDate = new Date().getTime();
+            orderExecution.treatmentStartDate = Date.now();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
             res.json(orderExecution);
         } else {
@@ -753,7 +774,7 @@ app.post('/api/executions/:orderId/finish', verifyToken, async (req, res) => {
         });
 
         if (orderExecution) {
-            orderExecution.treatmentFinishDate = new Date().getTime();
+            orderExecution.treatmentFinishDate = Date.now();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
             res.json(orderExecution);
         } else {
@@ -846,6 +867,27 @@ app.get('/api/executions/:orderId/start-date', verifyToken, async (req, res) => 
     } catch (error) {
         logger.error('Failed to fetch order execution start date:', error);
         res.status(500).json({ error: 'Failed to fetch order execution start date' });
+    }
+});
+
+app.get('/api/executions/:orderId/preparation-start-date', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution)
+            .createQueryBuilder('OrderExecution')
+            .leftJoinAndSelect('OrderExecution.order', 'order')
+            .where('order.id = :orderId', { orderId })
+            .select(['OrderExecution.id', 'OrderExecution.preparationStartDate'])
+            .getOne();
+
+        if (orderExecution) {
+            res.json({ preparationStartDate: orderExecution.preparationStartDate });
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch order execution preparation start date:', error);
+        res.status(500).json({ error: 'Failed to fetch order execution preparation start date' });
     }
 });
 
