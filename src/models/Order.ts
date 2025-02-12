@@ -87,7 +87,7 @@ export class Order {
     bagSize?: number;
 
     @Column('text', { nullable: true })
-    tkwProbesPhoto?: string; // Add tkwProbesPhoto column
+    tkwProbesPhoto?: string;
 
     @Column('int', { default: 60 })
     tkwMeasurementInterval!: number;
