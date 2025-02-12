@@ -64,13 +64,19 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
         (timeDiff !== null && timeDiff >= interval) ||
         (createIfNoOtherMeasurements && !lastMeasurement)
     ) {
-        logger.info(`Creating new TKW measurement for order execution ID: ${orderExecution.id}`);
-        const newMeasurement = new TkwMeasurement();
-        newMeasurement.creationDate = now;
-        newMeasurement.orderExecution = orderExecution;
-        await tkwMeasurementRepository.save(newMeasurement);
-        logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);
-    } else {
-        logger.info(`No new TKW measurement needed for order execution ID: ${orderExecution.id}`);
+        if (lastMeasurement && !lastMeasurement.probeDate) {
+            logger.info(
+                `Skipping creating new TKW measurement for order execution ID: ${orderExecution.id}, as previous one is not yet executed.`,
+            );
+        } else {
+            logger.info(
+                `Creating new TKW measurement for order execution ID: ${orderExecution.id}`,
+            );
+            const newMeasurement = new TkwMeasurement();
+            newMeasurement.creationDate = now;
+            newMeasurement.orderExecution = orderExecution;
+            await tkwMeasurementRepository.save(newMeasurement);
+            logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);
+        }
     }
 }
