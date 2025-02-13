@@ -106,10 +106,10 @@ app.use((req, _, next) => {
 });
 
 app.get('/', (_, res) => {
-    res.send(`Hello World! Version: ${version}`);
+    res.send(`Protravka Backend. Version: ${version}`);
 });
 
-app.get('api/features', (_, res) => {
+app.get('/api/features', (_, res) => {
     res.json({ lab: process.env.LAB_FEATURE === 'true' });
 });
 

@@ -13,7 +13,12 @@ import { DeepPartial, IsNull } from 'typeorm';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+
+const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    cb(null, true);
+};
+
+const upload = multer({ storage, fileFilter });
 
 const blobServiceClient = BlobServiceClient.fromConnectionString(
     process.env.AZURE_STORAGE_CONNECTION_STRING!,
@@ -25,17 +30,11 @@ const containerClient = blobServiceClient.getContainerClient(
 router.post(
     '/',
     verifyToken,
-    upload.fields([
-        { name: 'packingPhoto', maxCount: 1 },
-        { name: 'consumptionPhoto', maxCount: 1 },
-        { name: 'productExecutions[].applicationPhoto', maxCount: 1 },
-        { name: 'productExecutions[].consumptionPhoto', maxCount: 1 },
-    ]),
+    upload.fields([{ name: 'packingPhoto' }, { name: 'consumptionPhoto' }]),
     async (req, res) => {
         try {
             const {
                 orderId,
-                productExecutions,
                 applicationMethod,
                 packedseedsToTreatKg,
                 slurryConsumptionPerLotKg,
@@ -71,7 +70,7 @@ router.post(
                         currentProductIndex,
                     });
 
-                    if (req.files && files['packingPhoto']) {
+                    if (files['packingPhoto']) {
                         const packingPhotoFile = files['packingPhoto'][0];
                         const blobName = `packing_${orderId}_${Date.now()}.png`;
                         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -81,7 +80,7 @@ router.post(
                         orderExecution.packingPhoto = blockBlobClient.url;
                     }
 
-                    if (files && files['consumptionPhoto']) {
+                    if (files['consumptionPhoto']) {
                         const consumptionPhotoFile = files['consumptionPhoto'][0];
                         const blobName = `consumption_${orderId}_${Date.now()}.png`;
                         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -90,68 +89,10 @@ router.post(
                         });
                         orderExecution.consumptionPhoto = blockBlobClient.url;
                     }
-
-                    // Update or add product executions
-                    for (const productExecutionData of productExecutions) {
-                        let productExecution = orderExecution.productExecutions.find(
-                            (pe) => pe.productId === productExecutionData.productId,
-                        );
-                        if (productExecution) {
-                            Object.assign(productExecution, productExecutionData);
-
-                            if (
-                                files &&
-                                files[
-                                    `productExecutions[${productExecutionData.productId}].applicationPhoto`
-                                ]
-                            ) {
-                                const applicationPhotoFile =
-                                    files[
-                                        `productExecutions[${productExecutionData.productId}].applicationPhoto`
-                                    ][0];
-                                const blobName = `application_${orderId}_${productExecutionData.productId}_${Date.now()}.png`;
-                                const blockBlobClient =
-                                    containerClient.getBlockBlobClient(blobName);
-                                await blockBlobClient.uploadData(applicationPhotoFile.buffer, {
-                                    blobHTTPHeaders: {
-                                        blobContentType: applicationPhotoFile.mimetype,
-                                    },
-                                });
-                                productExecution.applicationPhoto = blockBlobClient.url;
-                            }
-
-                            if (
-                                files &&
-                                files[
-                                    `productExecutions[${productExecutionData.productId}].consumptionPhoto`
-                                ]
-                            ) {
-                                const consumptionPhotoFile =
-                                    files[
-                                        `productExecutions[${productExecutionData.productId}].consumptionPhoto`
-                                    ][0];
-                                const blobName = `consumption_${orderId}_${productExecutionData.productId}_${Date.now()}.png`;
-                                const blockBlobClient =
-                                    containerClient.getBlockBlobClient(blobName);
-                                await blockBlobClient.uploadData(consumptionPhotoFile.buffer, {
-                                    blobHTTPHeaders: {
-                                        blobContentType: consumptionPhotoFile.mimetype,
-                                    },
-                                });
-                                productExecution.consumptionPhoto = blockBlobClient.url;
-                            }
-                        } else {
-                            productExecution = AppDataSource.getRepository(ProductExecution).create(
-                                productExecutionData as ProductExecution,
-                            );
-                            orderExecution.productExecutions.push(productExecution);
-                        }
-                    }
                 } else {
                     const newOrderExecution: DeepPartial<OrderExecution> = {
                         order,
                         operator,
-                        productExecutions,
                         applicationMethod,
                         packedseedsToTreatKg,
                         slurryConsumptionPerLotKg,
@@ -159,7 +100,7 @@ router.post(
                         currentProductIndex,
                     };
 
-                    if (files && files['packingPhoto']) {
+                    if (files['packingPhoto']) {
                         const packingPhotoFile = files['packingPhoto'][0];
                         const blobName = `packing_${orderId}_${Date.now()}.png`;
                         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -169,7 +110,7 @@ router.post(
                         newOrderExecution.packingPhoto = blockBlobClient.url;
                     }
 
-                    if (files && files['consumptionPhoto']) {
+                    if (files['consumptionPhoto']) {
                         const consumptionPhotoFile = files['consumptionPhoto'][0];
                         const blobName = `consumption_${orderId}_${Date.now()}.png`;
                         const blockBlobClient = containerClient.getBlockBlobClient(blobName);
@@ -191,6 +132,69 @@ router.post(
         } catch (error) {
             logger.error('Failed to create or update order execution:', error);
             res.status(500).json({ error: 'Failed to create or update order execution' });
+        }
+    },
+);
+
+router.post(
+    '/:orderExecutionId/product-execution',
+    verifyToken,
+    upload.fields([{ name: 'applicationPhoto' }, { name: 'consumptionPhoto' }]),
+    async (req, res) => {
+        try {
+            const { orderExecutionId } = req.params;
+            const productExecutionData = JSON.parse(req.body.productExecution)[0];
+
+            const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+            const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+                where: { id: orderExecutionId },
+                relations: ['productExecutions'],
+            });
+
+            if (!orderExecution) {
+                res.status(404).json({ error: 'Order execution not found' });
+                return;
+            }
+
+            let productExecution = orderExecution.productExecutions.find(
+                (pe) => pe.productId === productExecutionData.productId,
+            );
+            if (productExecution) {
+                Object.assign(productExecution, productExecutionData);
+
+                if (files['applicationPhoto']) {
+                    const applicationPhotoFile = files['applicationPhoto'][0];
+                    const blobName = `application_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
+                    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+                    await blockBlobClient.uploadData(applicationPhotoFile.buffer, {
+                        blobHTTPHeaders: { blobContentType: applicationPhotoFile.mimetype },
+                    });
+                    productExecution.applicationPhoto = blockBlobClient.url;
+                }
+
+                if (files['consumptionPhoto']) {
+                    const consumptionPhotoFile = files['consumptionPhoto'][0];
+                    const blobName = `consumption_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
+                    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+                    await blockBlobClient.uploadData(consumptionPhotoFile.buffer, {
+                        blobHTTPHeaders: { blobContentType: consumptionPhotoFile.mimetype },
+                    });
+                    productExecution.consumptionPhoto = blockBlobClient.url;
+                }
+            } else {
+                productExecution = AppDataSource.getRepository(ProductExecution).create(
+                    productExecutionData as ProductExecution,
+                );
+                orderExecution.productExecutions.push(productExecution);
+            }
+
+            const savedOrderExecution =
+                await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+            res.status(201).json(savedOrderExecution);
+        } catch (error) {
+            logger.error('Failed to create or update product execution:', error);
+            res.status(500).json({ error: 'Failed to create or update product execution' });
         }
     },
 );
@@ -255,69 +259,6 @@ router.post('/:orderId/finish', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to finish order execution:', error);
         res.status(500).json({ error: 'Failed to finish order execution' });
-    }
-});
-
-router.get('/user-order-executions', verifyToken, async (req, res) => {
-    try {
-        const user = req.user;
-        const operator = await AppDataSource.getRepository(Operator).findOneBy({
-            firebaseUserId: user.uid,
-        });
-
-        if (!operator) {
-            res.status(404).json({ error: 'Operator not found' });
-        } else {
-            const orderExecutions = await AppDataSource.getRepository(OrderExecution).find({
-                where: { operator: { id: operator.id } },
-                relations: ['productExecutions', 'order'],
-            });
-
-            res.json(
-                orderExecutions.map((orderExecution) => ({
-                    orderId: orderExecution.order.id,
-                    ...orderExecution,
-                })),
-            );
-        }
-    } catch (error) {
-        logger.error('Failed to fetch user order executions:', error);
-        res.status(500).json({ error: 'Failed to fetch user order executions' });
-    }
-});
-
-router.get('/:orderId', verifyToken, async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
-            where: { order: { id: orderId } },
-            relations: ['productExecutions'],
-            select: [
-                'id',
-                'operator',
-                'applicationMethod',
-                'packedseedsToTreatKg',
-                'slurryConsumptionPerLotKg',
-                'currentPage',
-                'currentProductIndex',
-                'treatmentStartDate',
-                'treatmentFinishDate',
-                'consumptionPhoto',
-                'packingPhoto',
-            ],
-        });
-
-        if (orderExecution) {
-            res.json({
-                ...orderExecution,
-                orderId,
-            });
-        } else {
-            res.status(404).json({ error: 'Order execution not found' });
-        }
-    } catch (error) {
-        logger.error('Failed to fetch order execution:', error);
-        res.status(500).json({ error: 'Failed to fetch order execution' });
     }
 });
 
@@ -404,6 +345,34 @@ router.get('/:orderId/latest-tkw', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to fetch latest TKW measurement date:', error);
         res.status(500).json({ error: 'Failed to fetch latest TKW measurement date' });
+    }
+});
+
+router.get('/user-order-executions', verifyToken, async (req, res) => {
+    try {
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator).findOneBy({
+            firebaseUserId: user.uid,
+        });
+
+        if (!operator) {
+            res.status(404).json({ error: 'Operator not found' });
+        } else {
+            const orderExecutions = await AppDataSource.getRepository(OrderExecution).find({
+                where: { operator: { id: operator.id } },
+                relations: ['productExecutions', 'order'],
+            });
+
+            res.json(
+                orderExecutions.map((orderExecution) => ({
+                    orderId: orderExecution.order.id,
+                    ...orderExecution,
+                })),
+            );
+        }
+    } catch (error) {
+        logger.error('Failed to fetch user order executions:', error);
+        res.status(500).json({ error: 'Failed to fetch user order executions' });
     }
 });
 
@@ -513,5 +482,40 @@ router.put(
         }
     },
 );
+
+router.get('/:orderId', verifyToken, async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
+            where: { order: { id: orderId } },
+            relations: ['productExecutions'],
+            select: [
+                'id',
+                'operator',
+                'applicationMethod',
+                'packedseedsToTreatKg',
+                'slurryConsumptionPerLotKg',
+                'currentPage',
+                'currentProductIndex',
+                'treatmentStartDate',
+                'treatmentFinishDate',
+                'consumptionPhoto',
+                'packingPhoto',
+            ],
+        });
+
+        if (orderExecution) {
+            res.json({
+                ...orderExecution,
+                orderId,
+            });
+        } else {
+            res.status(404).json({ error: 'Order execution not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch order execution:', error);
+        res.status(500).json({ error: 'Failed to fetch order execution' });
+    }
+});
 
 export default router;
