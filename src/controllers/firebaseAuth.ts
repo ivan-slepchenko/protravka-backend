@@ -8,7 +8,7 @@ import {
     sendPasswordResetEmail,
 } from 'firebase/auth';
 import { Operator, Role } from '../models/Operator';
-import { AppDataSource } from '..';
+import { AppDataSource, logger } from '..';
 
 export const registerUser = async (req: Request, res: Response) => {
     const { email, password, name, surname, birthday, phone } = req.body;
@@ -69,15 +69,25 @@ export const loginUser = async (req: Request, res: Response) => {
                     res.cookie('access_token', await idToken, {
                         httpOnly: true,
                     });
+
+                    const user = {
+                        email: operator.email,
+                        name: operator.name,
+                        surname: operator.surname,
+                        phone: operator.phone,
+                        roles: operator.roles,
+                        company: operator.company,
+                    };
+
+                    try {
+                        operator.company.featureFlags = JSON.parse(operator.company.featureFlags);
+                    } catch (e) {
+                        logger.warn('Failed to parse featureFlags:', e);
+                    }
+
                     res.status(200).json({
                         message: 'User logged in successfully',
-                        user: {
-                            email: operator.email,
-                            name: operator.name,
-                            surname: operator.surname,
-                            phone: operator.phone,
-                            roles: operator.roles,
-                        },
+                        user,
                     });
                 } else {
                     res.status(404).json({ error: 'Operator not found' });

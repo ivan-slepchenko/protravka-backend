@@ -14,19 +14,21 @@ router.post('/reset-password', resetPassword);
 router.get('/user', verifyToken, async (req, res) => {
     try {
         const user = req.user;
-        const operator = await AppDataSource.getRepository(Operator)
-            .createQueryBuilder('op')
-            .leftJoinAndSelect('op.company', 'company')
-            .select([
-                'op.id',
-                'op.firebaseUserId',
-                'company.id',
-                'company.name',
-                'company.contactEmail',
-                'company.featureFlags',
-            ])
-            .where('op.firebaseUserId = :uid', { uid: user.uid })
-            .getOne();
+        const operator = await AppDataSource.getRepository(Operator).findOne({
+            where: {
+                firebaseUserId: user.uid,
+            },
+            relations: ['company'],
+        });
+
+        if (operator) {
+            try {
+                operator.company.featureFlags = JSON.parse(operator.company.featureFlags);
+            } catch (e) {
+                logger.warn('Failed to parse featureFlags:', e);
+            }
+        }
+
         if (operator) {
             res.status(200).json(operator);
         } else {
