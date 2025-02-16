@@ -1,9 +1,8 @@
 import { OrderExecution } from '../models/OrderExecution';
 import { TkwMeasurement } from '../models/TkwMeasurement';
-import { Order, OrderStatus } from '../models/Order';
-import { AppDataSource } from '..';
+import { OrderStatus } from '../models/Order';
 import { In } from 'typeorm';
-import { logger } from '../index';
+import { AppDataSource, logger } from '../index';
 
 export async function checkAndCreateTkwMeasurements() {
     logger.info('Starting TKW measurement check and creation process.');

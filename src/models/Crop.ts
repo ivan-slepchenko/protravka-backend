@@ -1,5 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, BeforeRemove } from 'typeorm';
+import {
+    Entity,
+    PrimaryGeneratedColumn,
+    Column,
+    OneToMany,
+    BeforeRemove,
+    ManyToOne,
+} from 'typeorm';
 import { Variety } from './Variety';
+import { Company } from './Company';
 import { AppDataSource } from '..';
 
 @Entity()
@@ -12,6 +20,9 @@ export class Crop {
 
     @OneToMany(() => Variety, (variety) => variety.crop, { cascade: true })
     varieties!: Variety[];
+
+    @ManyToOne(() => Company, (company) => company.crops, { nullable: false })
+    company!: Company;
 
     @BeforeRemove()
     async removeVarieties() {

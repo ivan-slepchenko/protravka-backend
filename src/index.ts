@@ -30,6 +30,7 @@ import productRoutes from './routes/productRoutes';
 import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
 import { createOrderRecipe } from './calculator/calculator';
+import { Company } from './models/Company';
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -67,6 +68,7 @@ export const AppDataSource = new DataSource({
         ProductExecution,
         OrderRecipe,
         ProductRecipe,
+        Company,
     ],
     synchronize: true,
 });
@@ -107,10 +109,6 @@ app.use((req, _, next) => {
 
 app.get('/', (_, res) => {
     res.send(`Protravka Backend. Version: ${version}`);
-});
-
-app.get('/api/features', (_, res) => {
-    res.json({ lab: process.env.LAB_FEATURE === 'true' });
 });
 
 app.get('/api/logs', (req, res) => {

@@ -13,6 +13,7 @@ import { Crop } from './Crop';
 import { Variety } from './Variety';
 import { OrderExecution } from './OrderExecution';
 import { OrderRecipe } from './OrderRecipe';
+import { Company } from './Company';
 
 export enum OrderStatus {
     LabAssignmentCreated = 'Lab Assignment Created',
@@ -56,6 +57,9 @@ export class Order {
 
     @ManyToOne(() => Variety, { eager: true })
     variety!: Variety;
+
+    @ManyToOne(() => Company, (company) => company.orders)
+    company!: Company;
 
     @Column('float', { nullable: true })
     tkw?: number;

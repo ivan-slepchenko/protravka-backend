@@ -1,10 +1,9 @@
 import express from 'express';
 import { verifyToken } from '../middleware';
-import { AppDataSource } from '../index';
 import { Order, OrderStatus } from '../models/Order';
 import { ProductRecipe } from '../models/ProductRecipe';
 import { createOrderRecipe } from '../calculator/calculator';
-import { logger } from '../index';
+import { AppDataSource, logger } from '../index';
 import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { Not } from 'typeorm';
@@ -68,18 +67,30 @@ router.post('/calculate-order', verifyToken, async (req, res) => {
 
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const orders = await AppDataSource.getRepository(Order).find({
-            where: { status: Not(OrderStatus.Archived) },
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator).findOne({
+            where: { firebaseUserId: user.uid },
             relations: [
-                'productDetails',
-                'productDetails.product',
-                'operator',
-                'orderRecipe',
-                'orderRecipe.productRecipes',
-                'orderRecipe.productRecipes.productDetail',
-                'orderRecipe.productRecipes.productDetail.product',
+                'company',
+                'company.orders',
+                'company.orders.productDetails',
+                'company.orders.productDetails.product',
+                'company.orders.operator',
+                'company.orders.orderRecipe',
+                'company.orders.orderRecipe.productRecipes',
+                'company.orders.orderRecipe.productRecipes.productDetail',
+                'company.orders.orderRecipe.productRecipes.productDetail.product',
             ],
         });
+
+        if (!operator || !operator.company) {
+            res.status(404).json({ error: 'Operator or company not found' });
+            return;
+        }
+
+        const orders = operator.company.orders.filter(
+            (order) => order.status !== OrderStatus.Archived,
+        );
         res.json(orders);
     } catch (error) {
         logger.error('Failed to fetch orders:', error);
@@ -89,14 +100,24 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.get('/Archived', verifyToken, async (req, res) => {
     try {
-        const ArchivedOrders = await AppDataSource.getRepository(Order).find({
-            where: { status: OrderStatus.Archived },
-            relations: ['productDetails', 'productDetails.product', 'operator'],
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator).findOne({
+            where: { firebaseUserId: user.uid },
+            relations: ['company', 'company.orders'],
         });
-        res.json(ArchivedOrders);
+
+        if (!operator || !operator.company) {
+            res.status(404).json({ error: 'Operator or company not found' });
+            return;
+        }
+
+        const archivedOrders = operator.company.orders.filter(
+            (order) => order.status === OrderStatus.Archived,
+        );
+        res.json(archivedOrders);
     } catch (error) {
-        logger.error('Failed to fetch Archived orders:', error);
-        res.status(500).json({ error: 'Failed to fetch Archived orders' });
+        logger.error('Failed to fetch archived orders:', error);
+        res.status(500).json({ error: 'Failed to fetch archived orders' });
     }
 });
 
@@ -110,6 +131,22 @@ router.post('/', verifyToken, async (req, res) => {
             tkwMeasurementInterval,
             ...orderData
         } = req.body;
+
+        const user = req.user;
+        const operatorManager = await AppDataSource.getRepository(Operator).findOne({
+            where: { firebaseUserId: user.uid },
+            relations: ['company'],
+        });
+
+        if (!operatorManager || !operatorManager.company) {
+            res.status(400).json({
+                error: 'Operator not found or not associated with a company',
+                message: 'Operator not found or not associated with a company',
+            });
+            return;
+        }
+
+        const isLabUsed = JSON.parse(operatorManager.company.featureFlags).lab;
 
         const operator =
             operatorId === undefined
@@ -144,12 +181,13 @@ router.post('/', verifyToken, async (req, res) => {
                 productDetails: productDetailsWithProduct,
                 tkwMeasurementInterval: tkwMeasurementInterval || 60,
                 creationDate: Date.now(),
+                company: operatorManager.company,
             });
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
             console.log('Order created:', order);
 
-            if (process.env.LAB_FEATURE !== 'true') {
+            if (isLabUsed !== 'true') {
                 const orderRecipeData = createOrderRecipe(savedOrder);
                 if (orderRecipeData === undefined) {
                     logger.error('Invalid order recipe data:', orderRecipeData);
@@ -275,8 +313,9 @@ router.put('/:id/finalize', verifyToken, async (req, res) => {
         } else {
             const productDetailsWithProduct = await Promise.all(
                 productDetails.map(async (detail: any) => {
-                    const product = await AppDataSource.getRepository(Product).findOneBy({
-                        id: detail.productId,
+                    const product = await AppDataSource.getRepository(Product).findOne({
+                        where: { id: detail.productId },
+                        relations: ['company'],
                     });
                     if (!product) {
                         throw new Error(`Invalid product ID: ${detail.productId}`);

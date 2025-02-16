@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index, ManyToOne } from 'typeorm';
+import { Company } from './Company';
 
 @Entity()
 export class Product {
@@ -15,4 +16,7 @@ export class Product {
     @Index()
     @Column('float')
     density!: number;
+
+    @ManyToOne(() => Company, (company) => company.products, { nullable: false })
+    company!: Company;
 }

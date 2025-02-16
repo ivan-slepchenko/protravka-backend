@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Index, ManyToOne } from 'typeorm';
 import { OrderExecution } from './OrderExecution';
+import { Company } from './Company';
 
 export enum Role {
     OPERATOR = 'operator',
@@ -40,4 +41,7 @@ export class Operator {
 
     @OneToMany(() => OrderExecution, (orderExecution) => orderExecution.operator)
     orderExecutions!: OrderExecution[];
+
+    @ManyToOne(() => Company, (company) => company.operators, { nullable: false })
+    company!: Company;
 }

@@ -1,15 +1,29 @@
 import express from 'express';
 import { verifyToken } from '../middleware';
-import { AppDataSource } from '../index';
 import { Crop } from '../models/Crop';
 import { Variety } from '../models/Variety';
-import { logger } from '../index';
+import { AppDataSource, logger } from '../index';
+import { Operator } from '../models/Operator';
 
 const router = express.Router();
 
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const crops = await AppDataSource.getRepository(Crop).find({ relations: ['varieties'] });
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator).findOne({
+            where: { firebaseUserId: user.uid },
+            relations: ['company', 'company.crops', 'company.crops.varieties'],
+        });
+
+        if (!operator || !operator.company) {
+            res.status(404).json({ error: 'Operator or company not found' });
+            return;
+        }
+
+        const crops = await AppDataSource.getRepository(Crop).find({
+            where: { company: { id: operator.company.id } },
+            relations: ['varieties'],
+        });
         res.json(crops);
     } catch (error) {
         logger.error('Failed to fetch crops:', error);
@@ -19,7 +33,22 @@ router.get('/', verifyToken, async (req, res) => {
 
 router.post('/', verifyToken, async (req, res) => {
     try {
-        const crop = AppDataSource.getRepository(Crop).create(req.body);
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator)
+            .createQueryBuilder('op')
+            .leftJoinAndSelect('op.company', 'company')
+            .where('op.firebaseUserId = :uid', { uid: user.uid })
+            .getOne();
+
+        if (!operator || !operator.company) {
+            res.status(404).json({ error: 'Operator or company not found' });
+            return;
+        }
+
+        const crop = AppDataSource.getRepository(Crop).create({
+            ...req.body,
+            company: operator.company,
+        });
         const savedCrop = await AppDataSource.getRepository(Crop).save(crop);
         res.status(201).json(savedCrop);
     } catch (error) {
@@ -30,8 +59,23 @@ router.post('/', verifyToken, async (req, res) => {
 
 router.post('/:cropId/varieties', verifyToken, async (req, res) => {
     try {
+        const user = req.user;
+        const operator = await AppDataSource.getRepository(Operator)
+            .createQueryBuilder('op')
+            .leftJoinAndSelect('op.company', 'company')
+            .where('op.firebaseUserId = :uid', { uid: user.uid })
+            .getOne();
+
+        if (!operator || !operator.company) {
+            res.status(404).json({ error: 'Operator or company not found' });
+            return;
+        }
+
         const { cropId } = req.params;
-        const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
+        const crop = await AppDataSource.getRepository(Crop).findOne({
+            where: { id: cropId, company: { id: operator.company.id } },
+        });
+
         if (crop) {
             const variety = AppDataSource.getRepository(Variety).create({ ...req.body, crop });
             const savedVariety = await AppDataSource.getRepository(Variety).save(variety);

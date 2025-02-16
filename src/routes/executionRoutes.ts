@@ -1,6 +1,5 @@
 import express from 'express';
 import { verifyToken } from '../middleware';
-import { AppDataSource } from '../index';
 import { Order, OrderStatus } from '../models/Order';
 import { OrderExecution } from '../models/OrderExecution';
 import { ProductExecution } from '../models/ProductExecution';
@@ -8,7 +7,7 @@ import { TkwMeasurement } from '../models/TkwMeasurement';
 import { Operator } from '../models/Operator';
 import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
-import { logger } from '../index';
+import { AppDataSource, logger } from '../index';
 import { DeepPartial, IsNull } from 'typeorm';
 
 const router = express.Router();
