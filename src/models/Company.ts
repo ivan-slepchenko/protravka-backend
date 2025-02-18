@@ -19,6 +19,9 @@ export class Company {
     @Column()
     featureFlags!: string;
 
+    @Column('simple-array', { default: 'enUS,fr' })
+    availableLanguages!: string[];
+
     @OneToMany(() => Crop, (crop) => crop.company)
     crops!: Crop[];
 
