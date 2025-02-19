@@ -2,8 +2,8 @@ import express from 'express';
 import { verifyToken } from '../middleware';
 import { Order, OrderStatus } from '../models/Order';
 import { ProductRecipe } from '../models/ProductRecipe';
-import { createOrderRecipe } from '../calculator/calculator';
-import { AppDataSource, logger } from '../index';
+import { createOrderRecipe as createOrderRecipeData } from '../calculator/calculator';
+import { AppDataSource, FeatureFlags, logger } from '../index';
 import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { Not } from 'typeorm';
@@ -45,7 +45,7 @@ router.post('/calculate-order', verifyToken, async (req, res) => {
 
         order.productDetails = productDetailsWithProduct;
 
-        const calculatedValues = createOrderRecipe(order);
+        const calculatedValues = createOrderRecipeData(order);
         if (calculatedValues === undefined) {
             logger.error('Invalid order recipe data:', calculatedValues);
             res.status(400).json({
@@ -146,7 +146,7 @@ router.post('/', verifyToken, async (req, res) => {
             return;
         }
 
-        const isLabUsed = JSON.parse(operatorManager.company.featureFlags).lab;
+        const isLabUsed = (JSON.parse(operatorManager.company.featureFlags) as FeatureFlags).useLab;
 
         const operator =
             operatorId === undefined
@@ -187,8 +187,8 @@ router.post('/', verifyToken, async (req, res) => {
 
             console.log('Order created:', order);
 
-            if (isLabUsed !== 'true') {
-                const orderRecipeData = createOrderRecipe(savedOrder);
+            if (!isLabUsed) {
+                const orderRecipeData = createOrderRecipeData(savedOrder);
                 if (orderRecipeData === undefined) {
                     logger.error('Invalid order recipe data:', orderRecipeData);
                     res.status(400).json({
@@ -342,7 +342,7 @@ router.put('/:id/finalize', verifyToken, async (req, res) => {
 
             const savedOrder = await AppDataSource.getRepository(Order).save(order);
 
-            const orderRecipeData = createOrderRecipe(savedOrder);
+            const orderRecipeData = createOrderRecipeData(savedOrder);
             if (orderRecipeData === undefined) {
                 logger.error('Invalid order recipe data:', orderRecipeData);
                 res.status(400).json({

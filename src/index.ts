@@ -29,23 +29,15 @@ import cropRoutes from './routes/cropRoutes';
 import productRoutes from './routes/productRoutes';
 import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
-import { createOrderRecipe } from './calculator/calculator';
 import { Company } from './models/Company';
-
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
 console.log('Version:', version);
 
 dotenv.config({ path: '.env' });
 
-// Azure Blob Service
-const blobServiceClient = BlobServiceClient.fromConnectionString(
-    process.env.AZURE_STORAGE_CONNECTION_STRING!,
-);
-const containerClient = blobServiceClient.getContainerClient(
-    process.env.AZURE_BLOB_CONTAINER_NAME!,
-);
+export interface FeatureFlags {
+    useLab: boolean;
+}
 
 export const AppDataSource = new DataSource({
     type: 'postgres',
