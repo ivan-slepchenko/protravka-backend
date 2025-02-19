@@ -12,7 +12,4 @@ export class Variety {
 
     @ManyToOne(() => Crop, (crop) => crop.varieties)
     crop!: Crop;
-
-    @ManyToOne(() => Company, (company) => company.varieties)
-    company!: Company;
 }

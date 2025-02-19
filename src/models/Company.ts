@@ -31,9 +31,6 @@ export class Company {
     @OneToMany(() => Product, (product) => product.company)
     products!: Product[];
 
-    @OneToMany(() => Variety, (variety) => variety.company)
-    varieties!: Variety[];
-
     @OneToMany(() => Order, (order) => order.company)
     orders!: Order[];
 }
