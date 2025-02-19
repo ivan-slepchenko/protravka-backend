@@ -517,4 +517,22 @@ router.get('/:orderId', verifyToken, async (req, res) => {
     }
 });
 
+router.get('/:executionId/tkw-measurements', verifyToken, async (req, res) => {
+    try {
+        const { executionId } = req.params;
+        const tkwMeasurements = await AppDataSource.getRepository(TkwMeasurement).find({
+            where: { orderExecution: { id: executionId } },
+        });
+
+        if (tkwMeasurements.length > 0) {
+            res.json(tkwMeasurements);
+        } else {
+            res.status(404).json({ error: 'TKW measurements not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to fetch TKW measurements:', error);
+        res.status(500).json({ error: 'Failed to fetch TKW measurements' });
+    }
+});
+
 export default router;
