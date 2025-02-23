@@ -98,29 +98,6 @@ router.get('/', verifyToken, async (req, res) => {
     }
 });
 
-router.get('/Archived', verifyToken, async (req, res) => {
-    try {
-        const user = req.user;
-        const operator = await AppDataSource.getRepository(Operator).findOne({
-            where: { firebaseUserId: user.uid },
-            relations: ['company', 'company.orders'],
-        });
-
-        if (!operator || !operator.company) {
-            res.status(404).json({ error: 'Operator or company not found' });
-            return;
-        }
-
-        const archivedOrders = operator.company.orders.filter(
-            (order) => order.status === OrderStatus.Archived,
-        );
-        res.json(archivedOrders);
-    } catch (error) {
-        logger.error('Failed to fetch archived orders:', error);
-        res.status(500).json({ error: 'Failed to fetch archived orders' });
-    }
-});
-
 router.post('/', verifyToken, async (req, res) => {
     try {
         const {
