@@ -238,7 +238,8 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 router.put('/:id/tkw', verifyToken, upload.single('tkwProbesPhoto'), async (req, res) => {
     try {
         const { id } = req.params;
-        const { tkwRep1, tkwRep2, tkwRep3 } = req.body;
+        const { tkwData } = req.body;
+        const { tkwRep1, tkwRep2, tkwRep3 } = JSON.parse(tkwData);
         const order = await AppDataSource.getRepository(Order).findOneBy({ id });
         if (order) {
             order.tkwRep1 = tkwRep1;

@@ -22,7 +22,7 @@ export async function checkAndCreateTkwMeasurements() {
         logger.info(`Found ${orderExecutions.length} order executions to check.`);
 
         for (const orderExecution of orderExecutions) {
-            await checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
+            await checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
         }
 
         logger.info('TKW measurement check and creation process completed.');
@@ -56,7 +56,9 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
     const interval = orderExecution.order.tkwMeasurementInterval * 60000; // Convert minutes to milliseconds
 
     logger.info(
-        `Last probe time: ${lastProbeTime}, Time difference: ${timeDiff}, Interval: ${interval}`,
+        `Last probe time: ${lastProbeTime}, Time difference: ${timeDiff}, Interval: ${interval}, createIfNoOtherMeasurements: ${createIfNoOtherMeasurements}, lastMeasurement ID: ${
+            lastMeasurement ? lastMeasurement.id : 'none'
+        }`,
     );
 
     if (

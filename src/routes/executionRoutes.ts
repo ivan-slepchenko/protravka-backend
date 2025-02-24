@@ -32,6 +32,7 @@ router.post(
     upload.fields([{ name: 'packingPhoto' }, { name: 'consumptionPhoto' }]),
     async (req, res) => {
         try {
+            const { orderExecutionData } = req.body;
             const {
                 orderId,
                 applicationMethod,
@@ -39,7 +40,7 @@ router.post(
                 slurryConsumptionPerLotKg,
                 currentPage,
                 currentProductIndex,
-            } = req.body;
+            } = JSON.parse(orderExecutionData);
 
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -60,7 +61,6 @@ router.post(
                 });
 
                 if (orderExecution) {
-                    // Update existing order execution
                     Object.assign(orderExecution, {
                         applicationMethod,
                         packedseedsToTreatKg,
@@ -119,7 +119,6 @@ router.post(
                         newOrderExecution.consumptionPhoto = blockBlobClient.url;
                     }
 
-                    // Create new order execution
                     orderExecution =
                         AppDataSource.getRepository(OrderExecution).create(newOrderExecution);
                 }
@@ -142,7 +141,7 @@ router.post(
     async (req, res) => {
         try {
             const { orderExecutionId } = req.params;
-            const productExecutionData = JSON.parse(req.body.productExecution)[0];
+            const productExecutionData = JSON.parse(req.body.productExecution);
 
             const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
@@ -419,7 +418,8 @@ router.put(
     async (req, res) => {
         try {
             const { id } = req.params;
-            const { tkwRep1, tkwRep2, tkwRep3 } = req.body;
+            const { tkwData } = req.body;
+            const { tkwRep1, tkwRep2, tkwRep3 } = JSON.parse(tkwData);
             const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOne({
                 where: { id },
                 relations: ['orderExecution', 'orderExecution.order'],

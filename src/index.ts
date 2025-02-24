@@ -139,7 +139,11 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-cron.schedule('*/10 * * * *', async () => {
+const cronSchedule = process.env.NODE_ENV === 'development' ? '*/1 * * * *' : '*/10 * * * *';
+
+console.log('Starting cron job with schedule:', cronSchedule);
+
+cron.schedule(cronSchedule, async () => {
     await checkAndCreateTkwMeasurements();
     console.log('Checked and created TKW measurements.');
 });
