@@ -160,36 +160,35 @@ router.post(
             );
             if (productExecution) {
                 Object.assign(productExecution, productExecutionData);
-
-                if (files['applicationPhoto']) {
-                    const applicationPhotoFile = files['applicationPhoto'][0];
-                    const blobName = `application_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
-                    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-                    await blockBlobClient.uploadData(applicationPhotoFile.buffer, {
-                        blobHTTPHeaders: { blobContentType: applicationPhotoFile.mimetype },
-                    });
-                    productExecution.applicationPhoto = blockBlobClient.url;
-                }
-
-                if (files['consumptionPhoto']) {
-                    const consumptionPhotoFile = files['consumptionPhoto'][0];
-                    const blobName = `consumption_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
-                    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-                    await blockBlobClient.uploadData(consumptionPhotoFile.buffer, {
-                        blobHTTPHeaders: { blobContentType: consumptionPhotoFile.mimetype },
-                    });
-                    productExecution.consumptionPhoto = blockBlobClient.url;
-                }
             } else {
                 productExecution = AppDataSource.getRepository(ProductExecution).create(
                     productExecutionData as ProductExecution,
                 );
-                orderExecution.productExecutions.push(productExecution);
+                productExecution.orderExecution = orderExecution;
+            }
+            if (files['applicationPhoto']) {
+                const applicationPhotoFile = files['applicationPhoto'][0];
+                const blobName = `application_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
+                const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+                await blockBlobClient.uploadData(applicationPhotoFile.buffer, {
+                    blobHTTPHeaders: { blobContentType: applicationPhotoFile.mimetype },
+                });
+                productExecution.applicationPhoto = blockBlobClient.url;
             }
 
-            const savedOrderExecution =
-                await AppDataSource.getRepository(OrderExecution).save(orderExecution);
-            res.status(201).json(savedOrderExecution);
+            if (files['consumptionPhoto']) {
+                const consumptionPhotoFile = files['consumptionPhoto'][0];
+                const blobName = `consumption_${orderExecutionId}_${productExecutionData.productId}_${Date.now()}.png`;
+                const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+                await blockBlobClient.uploadData(consumptionPhotoFile.buffer, {
+                    blobHTTPHeaders: { blobContentType: consumptionPhotoFile.mimetype },
+                });
+                productExecution.consumptionPhoto = blockBlobClient.url;
+            }
+
+            const savedProductExecution =
+                await AppDataSource.getRepository(ProductExecution).save(productExecution);
+            res.status(201).json(savedProductExecution);
         } catch (error) {
             logger.error('Failed to create or update product execution:', error);
             res.status(500).json({ error: 'Failed to create or update product execution' });
@@ -430,7 +429,7 @@ router.put(
                 tkwMeasurement.tkwProbe1 = tkwRep1;
                 tkwMeasurement.tkwProbe2 = tkwRep2;
                 tkwMeasurement.tkwProbe3 = tkwRep3;
-                tkwMeasurement.probeDate = new Date();
+                tkwMeasurement.probeDate = Date.now();
 
                 if (req.file) {
                     const blobName = `tkw_${id}_${Date.now()}.png`;

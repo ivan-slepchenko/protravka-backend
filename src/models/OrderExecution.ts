@@ -27,14 +27,10 @@ export class OrderExecution {
     @ManyToOne(() => Operator, (operator) => operator.orderExecutions)
     operator!: Operator;
 
-    @OneToMany(() => ProductExecution, (productExecution) => productExecution.orderExecution, {
-        cascade: true,
-    })
+    @OneToMany(() => ProductExecution, (productExecution) => productExecution.orderExecution)
     productExecutions!: ProductExecution[];
 
-    @OneToMany(() => TkwMeasurement, (tkwMeasurement) => tkwMeasurement.orderExecution, {
-        cascade: true,
-    })
+    @OneToMany(() => TkwMeasurement, (tkwMeasurement) => tkwMeasurement.orderExecution)
     tkwMeasurements!: TkwMeasurement[];
 
     @Column({ nullable: true })

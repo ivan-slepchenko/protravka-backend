@@ -74,7 +74,7 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
                 `Creating new TKW measurement for order execution ID: ${orderExecution.id}`,
             );
             const newMeasurement = new TkwMeasurement();
-            newMeasurement.creationDate = now;
+            newMeasurement.creationDate = now.getTime();
             newMeasurement.orderExecution = orderExecution;
             await tkwMeasurementRepository.save(newMeasurement);
             logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);

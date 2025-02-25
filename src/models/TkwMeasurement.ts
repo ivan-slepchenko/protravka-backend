@@ -7,12 +7,12 @@ export class TkwMeasurement {
     id!: string;
 
     @Index()
-    @Column()
-    creationDate!: Date;
+    @Column('float')
+    creationDate!: number;
 
     @Index()
-    @Column({ nullable: true })
-    probeDate?: Date;
+    @Column('float', { nullable: true })
+    probeDate?: number;
 
     @ManyToOne(() => OrderExecution, (orderExecution) => orderExecution.tkwMeasurements)
     orderExecution!: OrderExecution;

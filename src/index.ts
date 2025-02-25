@@ -139,7 +139,7 @@ if (process.env.NODE_ENV !== 'test') {
     });
 }
 
-const cronSchedule = process.env.NODE_ENV === 'development' ? '*/1 * * * *' : '*/10 * * * *';
+const cronSchedule = process.env.TS_NODE_DEV === 'true' ? '*/1 * * * *' : '*/10 * * * *';
 
 console.log('Starting cron job with schedule:', cronSchedule);
 
