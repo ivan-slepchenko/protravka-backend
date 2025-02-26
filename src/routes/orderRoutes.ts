@@ -216,7 +216,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
 
             await AppDataSource.getRepository(Order).save(order);
 
-            if (status === OrderStatus.LabControl) {
+            if (status === OrderStatus.LabToControl) {
                 const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
                     where: { order: { id } },
                     relations: ['order'],

@@ -448,7 +448,7 @@ router.put(
                     where: { id: tkwMeasurement.orderExecution.order.id },
                 });
                 if (order) {
-                    if (order.status === OrderStatus.LabControl) {
+                    if (order.status === OrderStatus.LabToControl) {
                         const incompleteMeasurements = await AppDataSource.getRepository(
                             TkwMeasurement,
                         ).find({
