@@ -45,8 +45,9 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
     }
 
     const lastMeasurement = await tkwMeasurementRepository.findOne({
-        where: { orderExecution },
+        where: { orderExecution: { id: orderExecution.id } },
         order: { creationDate: 'DESC' },
+        relations: ['orderExecution'],
     });
 
     const lastProbeTime = lastMeasurement
