@@ -62,9 +62,13 @@ export const loginUser = async (req: Request, res: Response) => {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             const idToken = userCredential.user.getIdToken();
             if (idToken) {
-                const operator = await AppDataSource.getRepository(Operator).findOneBy({
-                    firebaseUserId: userCredential.user.uid,
+                const operator = await AppDataSource.getRepository(Operator).findOne({
+                    where: {
+                        firebaseUserId: userCredential.user.uid,
+                    },
+                    relations: ['company'],
                 });
+
                 if (operator) {
                     res.cookie('access_token', await idToken, {
                         httpOnly: true,
