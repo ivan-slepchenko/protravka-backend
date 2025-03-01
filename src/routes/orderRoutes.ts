@@ -6,7 +6,6 @@ import { createOrderRecipe as createOrderRecipeData } from '../calculator/calcul
 import { AppDataSource, FeatureFlags, logger } from '../index';
 import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
-import { Not } from 'typeorm';
 import { Operator } from '../models/Operator';
 import { Crop } from '../models/Crop';
 import { Variety } from '../models/Variety';
@@ -14,7 +13,7 @@ import { Product } from '../models/Product';
 import { OrderRecipe } from '../models/OrderRecipe';
 import { OrderExecution } from '../models/OrderExecution';
 import { checkAndCreateTkwMeasurementsForOrderExecution } from '../daemon/TkwMeasurementDaemon';
-import admin from 'firebase-admin';
+import { notifyNewOrderCreated } from '../services/pushService';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -191,6 +190,8 @@ router.post('/', verifyToken, async (req, res) => {
 
                     logger.debug('Updated Order:', updatedOrder);
 
+                    await notifyNewOrderCreated(operator, operatorManager.company);
+
                     res.status(201).json(updatedOrder);
                 }
             } else {
@@ -229,62 +230,6 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                     checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
                 }
             }
-
-            // Send push notification if the order status is updated
-            if (order.operator) {
-                const operator = await AppDataSource.getRepository(Operator).findOne({
-                    where: { id: order.operator.id },
-                });
-
-                if (operator && operator.firebaseToken) {
-                    const message = {
-                        notification: {
-                            title: 'Order Status Updated',
-                            body: `Order ${order.id} status has been updated to ${status}.`,
-                        },
-                        token: operator.firebaseToken,
-                    };
-
-                    admin
-                        .messaging()
-                        .send(message)
-                        .then((response) => {
-                            logger.info(`Successfully sent message: ${response}`);
-                        })
-                        .catch((error) => {
-                            logger.error('Error sending message:', error);
-                        });
-                }
-            } else {
-                const companyOperators = await AppDataSource.getRepository(Operator).find({
-                    where: { company: order.company },
-                });
-
-                for (const op of companyOperators) {
-                    if (op.firebaseToken) {
-                        const message = {
-                            notification: {
-                                title: 'Order Status Updated',
-                                body: `Order ${order.id} status has been updated to ${status}.`,
-                            },
-                            token: op.firebaseToken,
-                        };
-
-                        admin
-                            .messaging()
-                            .send(message)
-                            .then((response) => {
-                                logger.info(
-                                    `Successfully sent message to operator ${op.id}: ${response}`,
-                                );
-                            })
-                            .catch((error) => {
-                                logger.error(`Error sending message to operator ${op.id}:`, error);
-                            });
-                    }
-                }
-            }
-
             res.json(order);
         } else {
             res.status(404).json({ error: 'Order not found' });
@@ -408,6 +353,8 @@ router.put('/:id/finalize', verifyToken, async (req, res) => {
                 const updatedOrder = await AppDataSource.getRepository(Order).save(savedOrder);
 
                 logger.debug('Updated Order:', updatedOrder);
+
+                await notifyNewOrderCreated(operator, order.company);
 
                 res.status(201).json(updatedOrder);
             }

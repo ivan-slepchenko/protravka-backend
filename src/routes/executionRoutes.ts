@@ -9,7 +9,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { AppDataSource, logger } from '../index';
 import { DeepPartial, IsNull } from 'typeorm';
-import admin from 'firebase-admin';
+import { notifyLabOperators } from '../services/pushService';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -126,25 +126,6 @@ router.post(
 
                 const savedOrderExecution =
                     await AppDataSource.getRepository(OrderExecution).save(orderExecution);
-
-                // Send push notification if the order execution is created or updated
-                const message = {
-                    notification: {
-                        title: 'Order Execution Updated',
-                        body: `Order execution for order ${order.id} has been updated.`,
-                    },
-                    token: operator.firebaseToken,
-                };
-
-                admin
-                    .messaging()
-                    .send(message)
-                    .then((response) => {
-                        logger.info(`Successfully sent message: ${response}`);
-                    })
-                    .catch((error) => {
-                        logger.error('Error sending message:', error);
-                    });
 
                 res.status(201).json(savedOrderExecution);
             }
@@ -442,7 +423,11 @@ router.put(
             const { tkwRep1, tkwRep2, tkwRep3 } = JSON.parse(tkwData);
             const tkwMeasurement = await AppDataSource.getRepository(TkwMeasurement).findOne({
                 where: { id },
-                relations: ['orderExecution', 'orderExecution.order'],
+                relations: [
+                    'orderExecution',
+                    'orderExecution.order',
+                    'orderExecution.order.company',
+                ],
             });
             if (!tkwMeasurement) {
                 res.status(404).json({ error: 'TKW measurement not found' });
@@ -492,6 +477,12 @@ router.put(
                 } else {
                     res.status(404).json({ error: 'Order not found' });
                 }
+
+                await notifyLabOperators(
+                    tkwMeasurement.orderExecution.order.company,
+                    'New TKW measurement request created',
+                    'A new TKW measurement has been created and is ready for review.',
+                );
 
                 res.json(updatedTkwMeasurement);
             }

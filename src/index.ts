@@ -31,7 +31,6 @@ import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
 import { Company } from './models/Company';
 import admin from 'firebase-admin';
-import { checkAndSendNotifications } from './daemon/NotificationDaemon';
 
 console.log('Version:', version);
 
@@ -157,9 +156,6 @@ admin.initializeApp({
     }),
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
 });
-
-// Schedule the notification daemon
-setInterval(checkAndSendNotifications, 10000);
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
