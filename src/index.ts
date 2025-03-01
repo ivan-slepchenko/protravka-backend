@@ -147,16 +147,6 @@ if (
     throw new Error('Missing required environment variables. See logs above.');
 }
 
-// Initialize Firebase Admin SDK
-admin.initializeApp({
-    credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    }),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-});
-
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {
         logger.info(`Server is running on port ${port}`);
