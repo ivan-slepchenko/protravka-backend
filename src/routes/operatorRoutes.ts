@@ -53,6 +53,30 @@ router.put('/:id', verifyToken, async (req, res) => {
     }
 });
 
+router.put('/firebase-token', verifyToken, async (req, res) => {
+    try {
+        const user = req.user;
+        const { firebaseToken } = req.body;
+
+        const operator = await AppDataSource.getRepository(Operator).findOne({
+            where: { firebaseUserId: user.uid },
+        });
+
+        if (!operator) {
+            res.status(404).json({ error: 'Operator not found' });
+            return;
+        }
+
+        operator.firebaseToken = firebaseToken;
+        await AppDataSource.getRepository(Operator).save(operator);
+
+        res.json({ message: 'Firebase token updated successfully' });
+    } catch (error) {
+        logger.error('Failed to update Firebase token:', error);
+        res.status(500).json({ error: 'Failed to update Firebase token' });
+    }
+});
+
 router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;

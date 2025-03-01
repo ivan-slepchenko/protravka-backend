@@ -14,6 +14,7 @@ import { Product } from '../models/Product';
 import { OrderRecipe } from '../models/OrderRecipe';
 import { OrderExecution } from '../models/OrderExecution';
 import { checkAndCreateTkwMeasurementsForOrderExecution } from '../daemon/TkwMeasurementDaemon';
+import admin from 'firebase-admin';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -206,7 +207,10 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
-        const order = await AppDataSource.getRepository(Order).findOneBy({ id });
+        const order = await AppDataSource.getRepository(Order).findOne({
+            where: { id },
+            relations: ['operator'],
+        });
         if (order) {
             order.status = status;
 
@@ -225,6 +229,62 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                     checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
                 }
             }
+
+            // Send push notification if the order status is updated
+            if (order.operator) {
+                const operator = await AppDataSource.getRepository(Operator).findOne({
+                    where: { id: order.operator.id },
+                });
+
+                if (operator && operator.firebaseToken) {
+                    const message = {
+                        notification: {
+                            title: 'Order Status Updated',
+                            body: `Order ${order.id} status has been updated to ${status}.`,
+                        },
+                        token: operator.firebaseToken,
+                    };
+
+                    admin
+                        .messaging()
+                        .send(message)
+                        .then((response) => {
+                            logger.info(`Successfully sent message: ${response}`);
+                        })
+                        .catch((error) => {
+                            logger.error('Error sending message:', error);
+                        });
+                }
+            } else {
+                const companyOperators = await AppDataSource.getRepository(Operator).find({
+                    where: { company: order.company },
+                });
+
+                for (const op of companyOperators) {
+                    if (op.firebaseToken) {
+                        const message = {
+                            notification: {
+                                title: 'Order Status Updated',
+                                body: `Order ${order.id} status has been updated to ${status}.`,
+                            },
+                            token: op.firebaseToken,
+                        };
+
+                        admin
+                            .messaging()
+                            .send(message)
+                            .then((response) => {
+                                logger.info(
+                                    `Successfully sent message to operator ${op.id}: ${response}`,
+                                );
+                            })
+                            .catch((error) => {
+                                logger.error(`Error sending message to operator ${op.id}:`, error);
+                            });
+                    }
+                }
+            }
+
             res.json(order);
         } else {
             res.status(404).json({ error: 'Order not found' });

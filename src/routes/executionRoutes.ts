@@ -9,6 +9,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { AppDataSource, logger } from '../index';
 import { DeepPartial, IsNull } from 'typeorm';
+import admin from 'firebase-admin';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -125,6 +126,26 @@ router.post(
 
                 const savedOrderExecution =
                     await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+
+                // Send push notification if the order execution is created or updated
+                const message = {
+                    notification: {
+                        title: 'Order Execution Updated',
+                        body: `Order execution for order ${order.id} has been updated.`,
+                    },
+                    token: operator.firebaseToken,
+                };
+
+                admin
+                    .messaging()
+                    .send(message)
+                    .then((response) => {
+                        logger.info(`Successfully sent message: ${response}`);
+                    })
+                    .catch((error) => {
+                        logger.error('Error sending message:', error);
+                    });
+
                 res.status(201).json(savedOrderExecution);
             }
         } catch (error) {

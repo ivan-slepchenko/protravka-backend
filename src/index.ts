@@ -30,6 +30,8 @@ import productRoutes from './routes/productRoutes';
 import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
 import { Company } from './models/Company';
+import admin from 'firebase-admin';
+import { checkAndSendNotifications } from './daemon/NotificationDaemon';
 
 console.log('Version:', version);
 
@@ -120,6 +122,44 @@ app.use('/api/crops', cropRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authenticationRoutes);
 app.use('/api/executions', executionRoutes);
+
+if (
+    !process.env.FIREBASE_PROJECT_ID ||
+    !process.env.FIREBASE_CLIENT_EMAIL ||
+    !process.env.FIREBASE_PRIVATE_KEY ||
+    !process.env.FIREBASE_STORAGE_BUCKET ||
+    !process.env.DB_HOST ||
+    !process.env.DB_PORT ||
+    !process.env.DB_USERNAME ||
+    !process.env.DB_PASSWORD ||
+    !process.env.DB_NAME
+) {
+    console.log('FIREBASE_PROJECT_ID:', process.env.FIREBASE_PROJECT_ID);
+    console.log('FIREBASE_CLIENT_EMAIL:', process.env.FIREBASE_CLIENT_EMAIL);
+    console.log('FIREBASE_PRIVATE_KEY:', process.env.FIREBASE_PRIVATE_KEY);
+    console.log('FIREBASE_STORAGE_BUCKET:', process.env.FIREBASE_STORAGE_BUCKET);
+
+    console.log('DB_HOST:', process.env.DB_HOST);
+    console.log('DB_PORT:', process.env.DB_PORT);
+    console.log('DB_USERNAME:', process.env.DB_USERNAME);
+    console.log('DB_PASSWORD:', process.env.DB_PASSWORD);
+    console.log('DB_NAME:', process.env.DB_NAME);
+
+    throw new Error('Missing required environment variables. See logs above.');
+}
+
+// Initialize Firebase Admin SDK
+admin.initializeApp({
+    credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+});
+
+// Schedule the notification daemon
+setInterval(checkAndSendNotifications, 10000);
 
 if (process.env.NODE_ENV !== 'test') {
     app.listen(port, () => {

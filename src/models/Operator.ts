@@ -36,6 +36,9 @@ export class Operator {
     @Column()
     firebaseUserId!: string;
 
+    @Column({ nullable: true })
+    firebaseToken?: string;
+
     @Column('simple-array')
     roles!: Role[];
 
