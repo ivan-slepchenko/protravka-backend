@@ -36,27 +36,12 @@ router.post('/', verifyToken, async (req, res) => {
     }
 });
 
-router.put('/:id', verifyToken, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
-        if (operator) {
-            AppDataSource.getRepository(Operator).merge(operator, req.body);
-            const updatedOperator = await AppDataSource.getRepository(Operator).save(operator);
-            res.json(updatedOperator);
-        } else {
-            res.status(404).json({ error: 'Operator not found' });
-        }
-    } catch (error) {
-        logger.error('Failed to update operator:', error);
-        res.status(500).json({ error: 'Failed to update operator' });
-    }
-});
-
 router.put('/firebase-token', verifyToken, async (req, res) => {
     try {
         const user = req.user;
         const { firebaseToken } = req.body;
+
+        logger.debug('Updating Firebase token:', firebaseToken);
 
         const operator = await AppDataSource.getRepository(Operator).findOne({
             where: { firebaseUserId: user.uid },
@@ -74,6 +59,23 @@ router.put('/firebase-token', verifyToken, async (req, res) => {
     } catch (error) {
         logger.error('Failed to update Firebase token:', error);
         res.status(500).json({ error: 'Failed to update Firebase token' });
+    }
+});
+
+router.put('/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const operator = await AppDataSource.getRepository(Operator).findOneBy({ id });
+        if (operator) {
+            AppDataSource.getRepository(Operator).merge(operator, req.body);
+            const updatedOperator = await AppDataSource.getRepository(Operator).save(operator);
+            res.json(updatedOperator);
+        } else {
+            res.status(404).json({ error: 'Operator not found' });
+        }
+    } catch (error) {
+        logger.error('Failed to update operator:', error);
+        res.status(500).json({ error: 'Failed to update operator' });
     }
 });
 

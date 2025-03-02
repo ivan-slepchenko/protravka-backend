@@ -30,7 +30,6 @@ import productRoutes from './routes/productRoutes';
 import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
 import { Company } from './models/Company';
-import admin from 'firebase-admin';
 
 console.log('Version:', version);
 

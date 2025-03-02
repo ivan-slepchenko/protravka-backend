@@ -6,6 +6,7 @@ import { Not } from 'typeorm';
 import { logger } from '../index';
 
 export const notifyNewOrderCreated = async (operator: Operator | null, company: Company) => {
+    logger.debug('Notify New Order Created:', operator, company);
     await sendPushNotification(
         operator,
         company,
@@ -68,9 +69,12 @@ export const sendPushNotification = async (
 };
 
 export const notifyLabOperators = async (company: Company, title: string, body: string) => {
-    const labOperators = await AppDataSource.getRepository(Operator).find({
-        where: { company, firebaseToken: Not(''), roles: Not(Role.LABORATORY) },
-    });
+    logger.debug('Notify Lab Operators:', company, title, body);
+    const labOperators = await AppDataSource.getRepository(Operator)
+        .createQueryBuilder('operator')
+        .where('operator.companyId = :companyId', { companyId: company.id })
+        .andWhere('operator.firebaseToken IS NOT NULL')
+        .getMany();
     await Promise.all(
         labOperators.map(async (op) => {
             if (!op.firebaseToken || !op.roles.includes(Role.LABORATORY)) return;
@@ -83,7 +87,9 @@ export const notifyLabOperators = async (company: Company, title: string, body: 
             };
             try {
                 const response = await admin.messaging().send(message);
-                logger.info(`Message sent to lab operator ${op.id}: ${response}`);
+                logger.info(
+                    `Message sent to lab operator ${op.id}: firebaseToken: ${op.firebaseToken}, response: ${response}`,
+                );
             } catch (error) {
                 logger.error(`Error sending message to lab operator ${op.id}:`, error);
             }

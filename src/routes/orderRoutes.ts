@@ -13,7 +13,7 @@ import { Product } from '../models/Product';
 import { OrderRecipe } from '../models/OrderRecipe';
 import { OrderExecution } from '../models/OrderExecution';
 import { checkAndCreateTkwMeasurementsForOrderExecution } from '../daemon/TkwMeasurementDaemon';
-import { notifyNewOrderCreated } from '../services/pushService';
+import { notifyLabOperators, notifyNewOrderCreated } from '../services/pushService';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -195,6 +195,11 @@ router.post('/', verifyToken, async (req, res) => {
                     res.status(201).json(updatedOrder);
                 }
             } else {
+                await notifyLabOperators(
+                    operatorManager.company,
+                    'New raw TKW measurement created',
+                    'A new raw TKW measurement has been created.',
+                );
                 res.status(201).json(savedOrder);
             }
         }
