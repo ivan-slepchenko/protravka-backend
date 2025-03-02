@@ -15,7 +15,7 @@
         "docker-run": "docker run -p 3081:3081 protravka-backend",
         "get-version": "node -p \"require('./package.json').version\"",
         "increase-package-version": "npm version patch",
-        "deploy": "npm run docker-build && wsl --setdefault Ubuntu && bash deploy.sh",
+        "deploy": "npm run increase-package-version && npm run docker-build && wsl --setdefault Ubuntu && bash deploy.sh",
         "ssh-azure-container": "az containerapp exec --name protravka-backend --resource-group protravka --container protravka-backend --command \"/bin/sh\"",
         "test": "jest"
     },
