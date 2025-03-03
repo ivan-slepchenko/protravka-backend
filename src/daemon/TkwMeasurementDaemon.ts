@@ -23,7 +23,7 @@ export async function checkAndCreateTkwMeasurements() {
         logger.info(`Found ${orderExecutions.length} order executions to check.`);
 
         for (const orderExecution of orderExecutions) {
-            await checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
+            await checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
         }
 
         logger.info('TKW measurement check and creation process completed.');
@@ -34,7 +34,6 @@ export async function checkAndCreateTkwMeasurements() {
 
 export async function checkAndCreateTkwMeasurementsForOrderExecution(
     orderExecution: OrderExecution,
-    createIfNoOtherMeasurements: boolean = false,
 ) {
     const tkwMeasurementRepository = AppDataSource.getRepository(TkwMeasurement);
     const now = new Date();
@@ -58,34 +57,23 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
     const interval = orderExecution.order.tkwMeasurementInterval * 60000; // Convert minutes to milliseconds
 
     logger.info(
-        `Last probe time: ${lastProbeTime}, Time difference: ${timeDiff}, Interval: ${interval}, createIfNoOtherMeasurements: ${createIfNoOtherMeasurements}, lastMeasurement ID: ${
+        `Last probe time: ${lastProbeTime}, Time difference: ${timeDiff}, Interval: ${interval}, lastMeasurement ID: ${
             lastMeasurement ? lastMeasurement.id : 'none'
         }`,
     );
 
-    if (
-        (timeDiff !== null && timeDiff >= interval) ||
-        (createIfNoOtherMeasurements && !lastMeasurement)
-    ) {
-        if (lastMeasurement && !lastMeasurement.probeDate) {
-            logger.info(
-                `Skipping creating new TKW measurement for order execution ID: ${orderExecution.id}, as previous one is not yet executed.`,
-            );
-        } else {
-            logger.info(
-                `Creating new TKW measurement for order execution ID: ${orderExecution.id}`,
-            );
-            const newMeasurement = new TkwMeasurement();
-            newMeasurement.creationDate = now.getTime();
-            newMeasurement.orderExecution = orderExecution;
-            await tkwMeasurementRepository.save(newMeasurement);
-            logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);
+    if ((timeDiff !== null && timeDiff >= interval) || !lastMeasurement) {
+        logger.info(`Creating new TKW measurement for order execution ID: ${orderExecution.id}`);
+        const newMeasurement = new TkwMeasurement();
+        newMeasurement.creationDate = now.getTime();
+        newMeasurement.orderExecution = orderExecution;
+        await tkwMeasurementRepository.save(newMeasurement);
+        logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);
 
-            if (!orderExecution.order.company) {
-                logger.error(`Order not found for order execution ID: ${orderExecution.id}`);
-            } else {
-                await notifyNewTkwMeasurementCreated(orderExecution.order.company);
-            }
+        if (!orderExecution.order.company) {
+            logger.error(`Order not found for order execution ID: ${orderExecution.id}`);
+        } else {
+            await notifyNewTkwMeasurementCreated(orderExecution.order.company);
         }
     }
 }

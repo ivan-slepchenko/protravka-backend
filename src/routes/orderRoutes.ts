@@ -125,14 +125,18 @@ router.post('/', verifyToken, async (req, res) => {
 
         const isLabUsed = (JSON.parse(operatorManager.company.featureFlags) as FeatureFlags).useLab;
 
+        console.log('Operator Id:', operatorId);
+
         const operator =
-            operatorId === undefined
+            operatorId === undefined || operatorId === null
                 ? null
                 : await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
+        console.log('Operator:', operator);
         const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
         const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId });
 
-        if ((!operator && operatorId !== undefined) || !crop || !variety) {
+        //TODO: IVAN - im not sure when it operatorId be undefined
+        if ((!operator && operatorId !== undefined && operatorId !== null) || !crop || !variety) {
             res.status(400).json({
                 error: 'Invalid operator, crop, or variety ID',
                 message: 'Invalid operator, crop, or variety ID',
@@ -228,7 +232,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                     relations: ['order', 'order.company'],
                 });
                 if (orderExecution) {
-                    checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);
+                    checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
                 }
             }
             res.json(order);

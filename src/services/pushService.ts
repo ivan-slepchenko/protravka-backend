@@ -10,8 +10,8 @@ export const notifyNewOrderCreated = async (operator: Operator | null, company: 
     await sendPushNotification(
         operator,
         company,
-        'alerts.new_order_created.title',
-        'alerts.new_order_created.body',
+        'New Order Created', //'alerts.new_order_created.title',
+        'New order is created and ready for treatment, check your board!', //'alerts.new_order_created.body',
     );
 };
 
@@ -19,8 +19,8 @@ export const notifyNewTkwMeasurementCreated = async (company: Company) => {
     logger.debug('Notify New Processed Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
-        'new_processed_tkw_measurement.title',
-        'new_processed_tkw_measurement.message',
+        'New Processed TKW Measurement Created', //'new_processed_tkw_measurement.title',
+        'New processed TKW measurement request is ready for processing, check your board!', //'new_processed_tkw_measurement.message',
     );
 };
 
@@ -28,8 +28,8 @@ export const notifyNewRawTkwMEasurementCreated = async (company: Company) => {
     logger.debug('Notify New Raw Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
-        'new_raw_tkw_measurement.title',
-        'new_raw_tkw_measurement.message',
+        'New Raw TKW Measurement Created', //'new_raw_tkw_measurement.title',
+        'New raw TKW measurement request is ready for processing, check your board!', //'new_raw_tkw_measurement.message',
     );
 };
 
