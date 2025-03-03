@@ -10,12 +10,30 @@ export const notifyNewOrderCreated = async (operator: Operator | null, company: 
     await sendPushNotification(
         operator,
         company,
-        'New Order Created',
-        'New order is ready for execution, check your board!',
+        'alerts.new_order_created.title',
+        'alerts.new_order_created.body',
     );
 };
 
-export const sendPushNotification = async (
+export const notifyNewTkwMeasurementCreated = async (company: Company) => {
+    logger.debug('Notify New Processed Tkw Measurement Created:', company.name);
+    await notifyLabOperators(
+        company,
+        'new_processed_tkw_measurement.title',
+        'new_processed_tkw_measurement.message',
+    );
+};
+
+export const notifyNewRawTkwMEasurementCreated = async (company: Company) => {
+    logger.debug('Notify New Raw Tkw Measurement Created:', company.name);
+    await notifyLabOperators(
+        company,
+        'new_raw_tkw_measurement.title',
+        'new_raw_tkw_measurement.message',
+    );
+};
+
+const sendPushNotification = async (
     operator: Operator | null,
     company: Company,
     title: string,
@@ -68,7 +86,7 @@ export const sendPushNotification = async (
     }
 };
 
-export const notifyLabOperators = async (company: Company, title: string, body: string) => {
+const notifyLabOperators = async (company: Company, title: string, body: string) => {
     logger.debug('Notify Lab Operators:', company, title, body);
     const labOperators = await AppDataSource.getRepository(Operator)
         .createQueryBuilder('operator')
@@ -88,7 +106,7 @@ export const notifyLabOperators = async (company: Company, title: string, body: 
             try {
                 const response = await admin.messaging().send(message);
                 logger.info(
-                    `Message sent to lab operator ${op.id}: firebaseToken: ${op.firebaseToken}, response: ${response}`,
+                    `Message sent to lab operator ${op.email}: firebaseToken: ${op.firebaseToken}, response: ${response}`,
                 );
             } catch (error) {
                 logger.error(`Error sending message to lab operator ${op.id}:`, error);

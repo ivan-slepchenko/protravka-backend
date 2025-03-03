@@ -9,7 +9,6 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { AppDataSource, logger } from '../index';
 import { DeepPartial, IsNull } from 'typeorm';
-import { notifyLabOperators } from '../services/pushService';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -477,13 +476,6 @@ router.put(
                 } else {
                     res.status(404).json({ error: 'Order not found' });
                 }
-
-                await notifyLabOperators(
-                    tkwMeasurement.orderExecution.order.company,
-                    'New TKW measurement request created',
-                    'A new TKW measurement has been created and is ready for review.',
-                );
-
                 res.json(updatedTkwMeasurement);
             }
         } catch (error) {

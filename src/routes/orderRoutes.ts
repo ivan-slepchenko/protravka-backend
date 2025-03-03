@@ -13,7 +13,7 @@ import { Product } from '../models/Product';
 import { OrderRecipe } from '../models/OrderRecipe';
 import { OrderExecution } from '../models/OrderExecution';
 import { checkAndCreateTkwMeasurementsForOrderExecution } from '../daemon/TkwMeasurementDaemon';
-import { notifyLabOperators, notifyNewOrderCreated } from '../services/pushService';
+import { notifyNewOrderCreated, notifyNewRawTkwMEasurementCreated } from '../services/pushService';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -195,11 +195,7 @@ router.post('/', verifyToken, async (req, res) => {
                     res.status(201).json(updatedOrder);
                 }
             } else {
-                await notifyLabOperators(
-                    operatorManager.company,
-                    'New raw TKW measurement created',
-                    'A new raw TKW measurement has been created.',
-                );
+                await notifyNewRawTkwMEasurementCreated(operatorManager.company);
                 res.status(201).json(savedOrder);
             }
         }
@@ -229,7 +225,7 @@ router.put('/:id/status', verifyToken, async (req, res) => {
             if (status === OrderStatus.LabToControl) {
                 const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
                     where: { order: { id } },
-                    relations: ['order'],
+                    relations: ['order', 'order.company'],
                 });
                 if (orderExecution) {
                     checkAndCreateTkwMeasurementsForOrderExecution(orderExecution, true);

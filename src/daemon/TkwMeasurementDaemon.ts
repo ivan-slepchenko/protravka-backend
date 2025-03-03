@@ -3,7 +3,7 @@ import { TkwMeasurement } from '../models/TkwMeasurement';
 import { OrderStatus } from '../models/Order';
 import { In } from 'typeorm';
 import { AppDataSource, logger } from '../index';
-import { notifyLabOperators } from '../services/pushService';
+import { notifyNewTkwMeasurementCreated } from '../services/pushService';
 
 export async function checkAndCreateTkwMeasurements() {
     logger.info('Starting TKW measurement check and creation process.');
@@ -17,7 +17,7 @@ export async function checkAndCreateTkwMeasurements() {
                     status: In([OrderStatus.TreatmentInProgress]),
                 },
             },
-            relations: ['order'],
+            relations: ['order', 'order.company'],
         });
 
         logger.info(`Found ${orderExecutions.length} order executions to check.`);
@@ -81,11 +81,11 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
             await tkwMeasurementRepository.save(newMeasurement);
             logger.info(`New TKW measurement created with ID: ${newMeasurement.id}`);
 
-            await notifyLabOperators(
-                orderExecution.order.company,
-                'New TKW measurement created',
-                'A new TKW measurement has been created and is ready for review.',
-            );
+            if (!orderExecution.order.company) {
+                logger.error(`Order not found for order execution ID: ${orderExecution.id}`);
+            } else {
+                await notifyNewTkwMeasurementCreated(orderExecution.order.company);
+            }
         }
     }
 }
