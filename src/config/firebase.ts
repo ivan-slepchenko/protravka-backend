@@ -21,6 +21,8 @@ const serviceAccount: ServiceAccount = {
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
 };
 
+console.log('serviceAccount:', serviceAccount);
+
 export const firebaseAdminApp = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
 });
