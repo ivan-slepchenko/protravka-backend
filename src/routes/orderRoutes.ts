@@ -194,12 +194,12 @@ router.post('/', verifyToken, async (req, res) => {
 
                     logger.debug('Updated Order:', updatedOrder);
 
-                    await notifyNewOrderCreated(operator, operatorManager.company);
+                    await notifyNewOrderCreated(operator, operatorManager.company, updatedOrder);
 
                     res.status(201).json(updatedOrder);
                 }
             } else {
-                await notifyNewRawTkwMEasurementCreated(operatorManager.company);
+                await notifyNewRawTkwMEasurementCreated(operatorManager.company, savedOrder);
                 res.status(201).json(savedOrder);
             }
         }
@@ -359,7 +359,7 @@ router.put('/:id/finalize', verifyToken, async (req, res) => {
 
                 logger.debug('Updated Order:', updatedOrder);
 
-                await notifyNewOrderCreated(operator, order.company);
+                await notifyNewOrderCreated(operator, order.company, updatedOrder);
 
                 res.status(201).json(updatedOrder);
             }

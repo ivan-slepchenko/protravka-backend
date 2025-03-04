@@ -73,7 +73,10 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
         if (!orderExecution.order.company) {
             logger.error(`Order not found for order execution ID: ${orderExecution.id}`);
         } else {
-            await notifyNewTkwMeasurementCreated(orderExecution.order.company);
+            await notifyNewTkwMeasurementCreated(
+                orderExecution.order.company,
+                orderExecution.order,
+            );
         }
     }
 }

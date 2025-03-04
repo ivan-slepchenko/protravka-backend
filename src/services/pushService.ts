@@ -4,32 +4,37 @@ import { Operator, Role } from '../models/Operator';
 import { Company } from '../models/Company';
 import { Not } from 'typeorm';
 import { logger } from '../index';
+import { Order } from '../models/Order';
 
-export const notifyNewOrderCreated = async (operator: Operator | null, company: Company) => {
+export const notifyNewOrderCreated = async (
+    operator: Operator | null,
+    company: Company,
+    order: Order,
+) => {
     logger.debug('Notify New Order Created:', operator, company);
     await sendPushNotification(
         operator,
         company,
-        'New Order Created', //'alerts.new_order_created.title',
-        'New order is created and ready for treatment, check your board!', //'alerts.new_order_created.body',
+        'New Order Created',
+        `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`,
     );
 };
 
-export const notifyNewTkwMeasurementCreated = async (company: Company) => {
+export const notifyNewTkwMeasurementCreated = async (company: Company, order: Order) => {
     logger.debug('Notify New Processed Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
         'New Processed TKW Measurement Created', //'new_processed_tkw_measurement.title',
-        'New processed TKW measurement request is ready for processing, check your board!', //'new_processed_tkw_measurement.message',
+        `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`, //'new_processed_tkw_measurement.message',
     );
 };
 
-export const notifyNewRawTkwMEasurementCreated = async (company: Company) => {
+export const notifyNewRawTkwMEasurementCreated = async (company: Company, order: Order) => {
     logger.debug('Notify New Raw Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
         'New Raw TKW Measurement Created', //'new_raw_tkw_measurement.title',
-        'New raw TKW measurement request is ready for processing, check your board!', //'new_raw_tkw_measurement.message',
+        `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`, //'new_raw_tkw_measurement.message',
     );
 };
 
