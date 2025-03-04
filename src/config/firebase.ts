@@ -1,7 +1,6 @@
 import * as firebase from 'firebase/app';
 import admin, { ServiceAccount } from 'firebase-admin';
 import * as dotenv from 'dotenv';
-import { logger } from '..';
 
 dotenv.config();
 
@@ -21,8 +20,6 @@ const serviceAccount: ServiceAccount = {
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
 };
-
-logger.info('Current serviceAccount:', serviceAccount);
 
 export const firebaseAdminApp = admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),

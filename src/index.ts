@@ -31,8 +31,6 @@ import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
 import { Company } from './models/Company';
 
-console.log('Version:', version);
-
 dotenv.config({ path: '.env' });
 
 export interface FeatureFlags {
@@ -80,6 +78,8 @@ log4js.configure({
 
 export const logger = log4js.getLogger();
 logger.level = 'debug';
+
+logger.info('Version:', version);
 
 const app = express();
 const port = process.env.PORT || 3000;
