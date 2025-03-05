@@ -5,6 +5,7 @@ import { Company } from '../models/Company';
 import { Not } from 'typeorm';
 import { logger } from '../index';
 import { Order } from '../models/Order';
+import { TkwMeasurement } from '../models/TkwMeasurement';
 
 export const notifyNewOrderCreated = async (
     operator: Operator | null,
@@ -17,15 +18,21 @@ export const notifyNewOrderCreated = async (
         company,
         'New Order Created',
         `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`,
+        `/lab/${order.id}`,
     );
 };
 
-export const notifyNewTkwMeasurementCreated = async (company: Company, order: Order) => {
+export const notifyNewTkwMeasurementCreated = async (
+    company: Company,
+    order: Order,
+    measurement: TkwMeasurement,
+) => {
     logger.debug('Notify New Processed Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
-        'New Processed TKW Measurement Created', //'new_processed_tkw_measurement.title',
-        `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`, //'new_processed_tkw_measurement.message',
+        'New Processed TKW Measurement Created',
+        `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`,
+        `/lab/${order.id}`,
     );
 };
 
@@ -35,6 +42,7 @@ export const notifyNewRawTkwMEasurementCreated = async (company: Company, order:
         company,
         'New Raw TKW Measurement Created', //'new_raw_tkw_measurement.title',
         `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`, //'new_raw_tkw_measurement.message',
+        '/execution',
     );
 };
 
@@ -43,6 +51,7 @@ const sendPushNotification = async (
     company: Company,
     title: string,
     body: string,
+    clickAction: string,
 ) => {
     if (operator) {
         if (!operator.firebaseToken || !operator.roles.includes(Role.OPERATOR)) {
@@ -55,6 +64,9 @@ const sendPushNotification = async (
                 notification: {
                     title,
                     body,
+                },
+                data: {
+                    click_action: clickAction,
                 },
                 token: operator.firebaseToken,
             };
@@ -78,6 +90,9 @@ const sendPushNotification = async (
                         title,
                         body,
                     },
+                    data: {
+                        click_action: clickAction,
+                    },
                     token: op.firebaseToken,
                 };
                 try {
@@ -91,7 +106,12 @@ const sendPushNotification = async (
     }
 };
 
-const notifyLabOperators = async (company: Company, title: string, body: string) => {
+const notifyLabOperators = async (
+    company: Company,
+    title: string,
+    body: string,
+    clickAction: string,
+) => {
     logger.debug('Notify Lab Operators:', company, title, body);
     const labOperators = await AppDataSource.getRepository(Operator)
         .createQueryBuilder('operator')
@@ -105,6 +125,9 @@ const notifyLabOperators = async (company: Company, title: string, body: string)
                 notification: {
                     title,
                     body,
+                },
+                data: {
+                    click_action: clickAction,
                 },
                 token: op.firebaseToken,
             };
