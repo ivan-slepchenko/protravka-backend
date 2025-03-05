@@ -22,11 +22,7 @@ export const notifyNewOrderCreated = async (
     );
 };
 
-export const notifyNewTkwMeasurementCreated = async (
-    company: Company,
-    order: Order,
-    measurement: TkwMeasurement,
-) => {
+export const notifyNewTkwMeasurementCreated = async (company: Company, order: Order) => {
     logger.debug('Notify New Processed Tkw Measurement Created:', company.name);
     await notifyLabOperators(
         company,
