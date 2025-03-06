@@ -5,7 +5,6 @@ import { Company } from '../models/Company';
 import { Not } from 'typeorm';
 import { logger } from '../index';
 import { Order } from '../models/Order';
-import { TkwMeasurement } from '../models/TkwMeasurement';
 
 export const notifyNewOrderCreated = async (
     operator: Operator | null,
@@ -66,6 +65,9 @@ const sendPushNotification = async (
             };
 
             try {
+                logger.info(
+                    `Sending message to operator: ${operator.email}, firebaseToken: ${operator.firebaseToken}`,
+                );
                 const response = await admin.messaging().send(message);
                 logger.info(`Successfully sent message: ${response}`);
             } catch (error) {
@@ -77,21 +79,26 @@ const sendPushNotification = async (
             where: { company, firebaseToken: Not('') },
         });
         await Promise.all(
-            companyOperators.map(async (op) => {
-                if (!op.firebaseToken || !op.roles.includes(Role.OPERATOR)) return;
+            companyOperators.map(async (operator) => {
+                if (!operator.firebaseToken || !operator.roles.includes(Role.OPERATOR)) return;
                 const message = {
                     data: {
                         clickAction,
                         title,
                         body,
                     },
-                    token: op.firebaseToken,
+                    token: operator.firebaseToken,
                 };
                 try {
+                    logger.info(
+                        `Sending message to operator: ${operator.email}, firebaseToken: ${operator.firebaseToken}`,
+                    );
                     const response = await admin.messaging().send(message);
-                    logger.info(`Message sent to operator ${op.id}: ${response}`);
+                    logger.info(
+                        `Message sent to operator: ${operator.email}, firebaseToken: ${operator.firebaseToken}: ${response}`,
+                    );
                 } catch (error) {
-                    logger.error(`Error sending message to operator ${op.id}:`, error);
+                    logger.error(`Error sending message to operator ${operator.id}:`, error);
                 }
             }),
         );
@@ -111,23 +118,26 @@ const notifyLabOperators = async (
         .andWhere('operator.firebaseToken IS NOT NULL')
         .getMany();
     await Promise.all(
-        labOperators.map(async (op) => {
-            if (!op.firebaseToken || !op.roles.includes(Role.LABORATORY)) return;
+        labOperators.map(async (operator) => {
+            if (!operator.firebaseToken || !operator.roles.includes(Role.LABORATORY)) return;
             const message = {
                 data: {
                     title,
                     body,
                     clickAction,
                 },
-                token: op.firebaseToken,
+                token: operator.firebaseToken,
             };
             try {
+                logger.info(
+                    `Sending message to lab operator: ${operator.email}, firebaseToken: ${operator.firebaseToken}`,
+                );
                 const response = await admin.messaging().send(message);
                 logger.info(
-                    `Message sent to lab operator ${op.email}: firebaseToken: ${op.firebaseToken}, response: ${response}`,
+                    `Message sent to lab operator: ${operator.email}: firebaseToken: ${operator.firebaseToken}, response: ${response}`,
                 );
             } catch (error) {
-                logger.error(`Error sending message to lab operator ${op.id}:`, error);
+                logger.error(`Error sending message to lab operator ${operator.id}:`, error);
             }
         }),
     );
