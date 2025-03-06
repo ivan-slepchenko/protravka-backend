@@ -57,12 +57,10 @@ const sendPushNotification = async (
             );
         } else {
             const message = {
-                notification: {
+                data: {
                     title,
                     body,
-                },
-                data: {
-                    click_action: clickAction,
+                    clickAction,
                 },
                 token: operator.firebaseToken,
             };
@@ -82,12 +80,10 @@ const sendPushNotification = async (
             companyOperators.map(async (op) => {
                 if (!op.firebaseToken || !op.roles.includes(Role.OPERATOR)) return;
                 const message = {
-                    notification: {
+                    data: {
+                        clickAction,
                         title,
                         body,
-                    },
-                    data: {
-                        click_action: clickAction,
                     },
                     token: op.firebaseToken,
                 };
@@ -118,12 +114,10 @@ const notifyLabOperators = async (
         labOperators.map(async (op) => {
             if (!op.firebaseToken || !op.roles.includes(Role.LABORATORY)) return;
             const message = {
-                notification: {
+                data: {
                     title,
                     body,
-                },
-                data: {
-                    click_action: clickAction,
+                    clickAction,
                 },
                 token: op.firebaseToken,
             };
