@@ -62,7 +62,10 @@ export async function checkAndCreateTkwMeasurementsForOrderExecution(
         }`,
     );
 
-    if ((timeDiff !== null && timeDiff >= interval) || !lastMeasurement) {
+    if (
+        (timeDiff !== null && timeDiff >= interval) ||
+        (!lastMeasurement && orderExecution.treatmentFinishDate !== null)
+    ) {
         logger.info(`Creating new TKW measurement for order execution ID: ${orderExecution.id}`);
         const newMeasurement = new TkwMeasurement();
         newMeasurement.creationDate = now.getTime();
