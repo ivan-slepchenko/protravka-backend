@@ -26,6 +26,33 @@ const containerClient = blobServiceClient.getContainerClient(
     process.env.AZURE_BLOB_CONTAINER_NAME!,
 );
 
+async function checkAndUpdateOrderStatus(orderId: string) {
+    const orderRepository = AppDataSource.getRepository(Order);
+    const order = await orderRepository.findOne({
+        where: { id: orderId },
+    });
+
+    if (order && order.status === OrderStatus.LabToControl) {
+        const lastTkwMeasurement = await AppDataSource.getRepository(TkwMeasurement)
+            .createQueryBuilder('tm')
+            .leftJoin('tm.orderExecution', 'oe')
+            .leftJoin('oe.order', 'ord')
+            .where('ord.id = :orderId', { orderId: order.id })
+            .orderBy('tm.creationDate', 'DESC')
+            .getOne();
+
+        const incompleteMeasurement = lastTkwMeasurement && lastTkwMeasurement.probeDate === null;
+
+        if (!incompleteMeasurement) {
+            order.status = OrderStatus.ToAcknowledge;
+            await orderRepository.save(order);
+            logger.info(`Order status updated to ToAcknowledge for order ID: ${order.id}`);
+        } else {
+            console.log('Incomplete measurements:', lastTkwMeasurement);
+        }
+    }
+}
+
 router.post(
     '/',
     verifyToken,
@@ -250,6 +277,9 @@ router.post('/:orderId/finish', verifyToken, async (req, res) => {
         if (orderExecution) {
             orderExecution.treatmentFinishDate = Date.now();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+
+            await checkAndUpdateOrderStatus(orderId);
+
             res.json(orderExecution);
         } else {
             res.status(404).json({ error: 'Order execution not found' });
@@ -448,34 +478,8 @@ router.put(
                 const updatedTkwMeasurement =
                     await AppDataSource.getRepository(TkwMeasurement).save(tkwMeasurement);
 
-                const orderRepository = AppDataSource.getRepository(Order);
-                const order = await orderRepository.findOne({
-                    where: { id: tkwMeasurement.orderExecution.order.id },
-                });
-                if (order) {
-                    if (order.status === OrderStatus.LabToControl) {
-                        const incompleteMeasurements = await AppDataSource.getRepository(
-                            TkwMeasurement,
-                        ).find({
-                            where: {
-                                orderExecution: { order: { id: order.id } },
-                                probeDate: IsNull(),
-                            },
-                        });
+                await checkAndUpdateOrderStatus(tkwMeasurement.orderExecution.order.id);
 
-                        if (incompleteMeasurements.length === 0) {
-                            order.status = OrderStatus.ToAcknowledge;
-                            await orderRepository.save(order);
-                            logger.info(
-                                `Order status updated to ToAcknowledge for order ID: ${order.id}`,
-                            );
-                        } else {
-                            console.log('Incomplete measurements:', incompleteMeasurements);
-                        }
-                    }
-                } else {
-                    res.status(404).json({ error: 'Order not found' });
-                }
                 res.json(updatedTkwMeasurement);
             }
         } catch (error) {
