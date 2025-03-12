@@ -20,6 +20,7 @@ export enum OrderStatus {
     TKWConfirmed = 'TKW Confirmed',
     RecipeCreated = 'Recipe Created',
     TreatmentInProgress = 'Treatment In Progress',
+    PackingInProgress = 'Packing In Progress',
     LabToControl = 'Lab To Control',
     ToAcknowledge = 'To Acknowledge',
     Archived = 'Archived',
