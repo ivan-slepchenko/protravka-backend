@@ -9,6 +9,7 @@ import { BlobServiceClient } from '@azure/storage-blob';
 import multer from 'multer';
 import { AppDataSource, logger } from '../index';
 import { DeepPartial, IsNull } from 'typeorm';
+import { checkAndCreateTkwMeasurementsForOrderExecution } from '../daemon/TkwMeasurementDaemon';
 
 const router = express.Router();
 const storage = multer.memoryStorage();
@@ -250,12 +251,15 @@ router.post('/:orderId/start', verifyToken, async (req, res) => {
         const { orderId } = req.params;
         const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
             where: { order: { id: orderId } },
-            relations: ['order'],
+            relations: ['order', 'order.company'],
         });
 
         if (orderExecution) {
             orderExecution.treatmentStartDate = Date.now();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
+
+            checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
+
             res.json(orderExecution);
         } else {
             res.status(404).json({ error: 'Order execution not found' });
