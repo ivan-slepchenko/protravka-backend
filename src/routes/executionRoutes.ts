@@ -27,7 +27,7 @@ const containerClient = blobServiceClient.getContainerClient(
     process.env.AZURE_BLOB_CONTAINER_NAME!,
 );
 
-async function checkAndUpdateOrderStatus(orderId: string) {
+async function checkAndUpdateOrderStatus(orderId: string, finishingTreatment: boolean = false) {
     const orderRepository = AppDataSource.getRepository(Order);
     const order = await orderRepository.findOne({
         where: { id: orderId },
@@ -44,13 +44,20 @@ async function checkAndUpdateOrderStatus(orderId: string) {
 
         const incompleteMeasurement = lastTkwMeasurement && lastTkwMeasurement.probeDate === null;
 
-        if (!incompleteMeasurement) {
-            order.status = OrderStatus.ToAcknowledge;
-            await orderRepository.save(order);
-            logger.info(`Order status updated to ToAcknowledge for order ID: ${order.id}`);
+        if (finishingTreatment) {
+            if (incompleteMeasurement) {
+                order.status = OrderStatus.LabToControl;
+            } else {
+                order.status = OrderStatus.ToAcknowledge;
+            }
         } else {
-            console.log('Incomplete measurements:', lastTkwMeasurement);
+            if (!incompleteMeasurement) {
+                order.status = OrderStatus.ToAcknowledge;
+            }
         }
+
+        await orderRepository.save(order);
+        logger.info(`Order status updated to ${order.status} for order ID: ${order.id}`);
     }
 }
 
@@ -282,7 +289,7 @@ router.post('/:orderId/finish', verifyToken, async (req, res) => {
             orderExecution.treatmentFinishDate = Date.now();
             await AppDataSource.getRepository(OrderExecution).save(orderExecution);
 
-            await checkAndUpdateOrderStatus(orderId);
+            await checkAndUpdateOrderStatus(orderId, true);
 
             res.json(orderExecution);
         } else {
