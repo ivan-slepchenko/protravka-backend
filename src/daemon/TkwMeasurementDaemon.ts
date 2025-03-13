@@ -1,7 +1,7 @@
 import { OrderExecution } from '../models/OrderExecution';
 import { TkwMeasurement } from '../models/TkwMeasurement';
 import { OrderStatus } from '../models/Order';
-import { In } from 'typeorm';
+import { In, IsNull, Not } from 'typeorm';
 import { AppDataSource, logger } from '../index';
 import { notifyNewTkwMeasurementCreated } from '../services/pushService';
 
@@ -13,9 +13,7 @@ export async function checkAndCreateTkwMeasurements() {
     try {
         const orderExecutions = await orderExecutionRepository.find({
             where: {
-                order: {
-                    status: In([OrderStatus.TreatmentInProgress]),
-                },
+                treatmentStartDate: Not(IsNull()),
             },
             relations: ['order', 'order.company'],
         });
