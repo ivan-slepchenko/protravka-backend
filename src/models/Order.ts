@@ -19,6 +19,9 @@ export enum OrderStatus {
     LabAssignmentCreated = 'Lab Assignment Created',
     TKWConfirmed = 'TKW Confirmed',
     RecipeCreated = 'Recipe Created',
+    //TODO: This status is confusing. This means order is taken by some user, but not actually treatment started.
+    //TODO: Statuses should be extended with a new status like "Order Taken".
+    //TODO: Treatment is in progress when treatmentStartDate is not null
     TreatmentInProgress = 'Treatment In Progress',
     PackingInProgress = 'Packing In Progress',
     LabToControl = 'Lab To Control',
