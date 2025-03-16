@@ -14,6 +14,9 @@ export async function checkAndCreateTkwMeasurements() {
         const orderExecutions = await orderExecutionRepository.find({
             where: {
                 treatmentStartDate: Not(IsNull()),
+                order: {
+                    status: In([OrderStatus.TreatmentInProgress]),
+                },
             },
             relations: ['order', 'order.company'],
         });
