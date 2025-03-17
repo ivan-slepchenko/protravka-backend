@@ -8,10 +8,7 @@ import { version } from '../package.json';
 import cookieParser from 'cookie-parser';
 import { DataSource } from 'typeorm';
 import cron from 'node-cron';
-import multer from 'multer';
-import { BlobServiceClient } from '@azure/storage-blob';
-import { verifyToken } from './middleware';
-import { Order, OrderStatus } from './models/Order';
+import { Order } from './models/Order';
 import { ProductDetail } from './models/ProductDetail';
 import { Operator } from './models/Operator';
 import { Crop } from './models/Crop';
@@ -85,8 +82,8 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 const corsOptions = {
-    origin: [/^http:\/\/localhost(:\d+)?$/, /\.azurecontainerapps\.io$/], // Allow localhost and any subdomain and port from azurecontainerapps.io
-    credentials: true, // Allow credentials
+    origin: [/^http:\/\/localhost(:\d+)?$/, /\.azurecontainerapps\.io$/, 'https://teravix.tech'],
+    credentials: true,
 };
 
 app.use(cors(corsOptions));
