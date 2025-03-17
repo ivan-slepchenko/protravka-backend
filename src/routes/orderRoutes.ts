@@ -219,7 +219,18 @@ router.put('/:id/status', verifyToken, async (req, res) => {
             where: { id },
             relations: ['operator'],
         });
+
         if (order) {
+            if (
+                order.status !== OrderStatus.RecipeCreated &&
+                status === OrderStatus.TreatmentInProgress
+            ) {
+                return res.status(400).json({
+                    alreadyInProgress: true,
+                    operator: order.operator,
+                });
+            }
+
             order.status = status;
 
             if (status === OrderStatus.Completed || status === OrderStatus.Failed) {
