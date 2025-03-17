@@ -213,6 +213,8 @@ router.put('/:id/status', verifyToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
+        const user = req.user;
+
         const order = await AppDataSource.getRepository(Order).findOne({
             where: { id },
             relations: ['operator'],
@@ -224,6 +226,14 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                 order.completionDate = Date.now();
             }
 
+            if (order.operator === null && status === OrderStatus.TreatmentInProgress) {
+                const operator = await AppDataSource.getRepository(Operator).findOne({
+                    where: { firebaseUserId: user.uid },
+                });
+                if (operator) {
+                    order.operator = operator;
+                }
+            }
             await AppDataSource.getRepository(Order).save(order);
 
             if (status === OrderStatus.LabToControl) {
@@ -287,13 +297,13 @@ router.put('/:id/finalize', verifyToken, async (req, res) => {
         const { productDetails, operatorId, cropId, varietyId, ...orderData } = req.body;
 
         const operator =
-            operatorId === undefined
+            operatorId === null
                 ? null
                 : await AppDataSource.getRepository(Operator).findOneBy({ id: operatorId });
         const crop = await AppDataSource.getRepository(Crop).findOneBy({ id: cropId });
         const variety = await AppDataSource.getRepository(Variety).findOneBy({ id: varietyId });
 
-        if ((!operator && operatorId !== undefined) || !crop || !variety) {
+        if ((!operator && operatorId !== null) || !crop || !variety) {
             res.status(400).json({
                 error: 'Invalid operator, crop, or variety ID',
                 message: 'Invalid operator, crop, or variety ID',
