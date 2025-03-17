@@ -225,35 +225,37 @@ router.put('/:id/status', verifyToken, async (req, res) => {
                 order.status !== OrderStatus.RecipeCreated &&
                 status === OrderStatus.TreatmentInProgress
             ) {
-                return res.status(400).json({
+                res.status(400).json({
                     alreadyInProgress: true,
                     operator: order.operator,
                 });
-            }
+            } else {
+                order.status = status;
 
-            order.status = status;
-
-            if (status === OrderStatus.Completed || status === OrderStatus.Failed) {
-                order.completionDate = Date.now();
-            }
-
-            if (order.operator === null && status === OrderStatus.TreatmentInProgress) {
-                const operator = await AppDataSource.getRepository(Operator).findOne({
-                    where: { firebaseUserId: user.uid },
-                });
-                if (operator) {
-                    order.operator = operator;
+                if (status === OrderStatus.Completed || status === OrderStatus.Failed) {
+                    order.completionDate = Date.now();
                 }
-            }
-            await AppDataSource.getRepository(Order).save(order);
 
-            if (status === OrderStatus.LabToControl) {
-                const orderExecution = await AppDataSource.getRepository(OrderExecution).findOne({
-                    where: { order: { id } },
-                    relations: ['order', 'order.company'],
-                });
-                if (orderExecution) {
-                    checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
+                if (order.operator === null && status === OrderStatus.TreatmentInProgress) {
+                    const operator = await AppDataSource.getRepository(Operator).findOne({
+                        where: { firebaseUserId: user.uid },
+                    });
+                    if (operator) {
+                        order.operator = operator;
+                    }
+                }
+                await AppDataSource.getRepository(Order).save(order);
+
+                if (status === OrderStatus.LabToControl) {
+                    const orderExecution = await AppDataSource.getRepository(
+                        OrderExecution,
+                    ).findOne({
+                        where: { order: { id } },
+                        relations: ['order', 'order.company'],
+                    });
+                    if (orderExecution) {
+                        checkAndCreateTkwMeasurementsForOrderExecution(orderExecution);
+                    }
                 }
             }
             res.json(order);
