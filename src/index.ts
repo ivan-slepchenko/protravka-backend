@@ -26,6 +26,7 @@ import cropRoutes from './routes/cropRoutes';
 import productRoutes from './routes/productRoutes';
 import authenticationRoutes from './routes/authenticationRoutes';
 import executionRoutes from './routes/executionRoutes';
+import cleanupRoutes from './routes/cleanupRoutes';
 import { Company } from './models/Company';
 
 dotenv.config({ path: '.env' });
@@ -117,6 +118,7 @@ app.use('/api/crops', cropRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authenticationRoutes);
 app.use('/api/executions', executionRoutes);
+app.use('/api/cleanup', cleanupRoutes);
 
 if (
     !process.env.FIREBASE_PROJECT_ID ||
