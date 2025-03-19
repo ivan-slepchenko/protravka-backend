@@ -17,7 +17,7 @@ export const notifyNewOrderCreated = async (
         company,
         'New Order Created',
         `Lot Number: ${order.lotNumber}\nVariety: ${order.variety.name}`,
-        `/lab/${order.id}`,
+        `/execution`,
     );
 };
 
