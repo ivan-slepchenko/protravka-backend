@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { Operator, Role } from '../models/Operator';
 import { AppDataSource, logger } from '..';
+import { Company } from '../models/Company';
 
 export const registerUser = async (req: Request, res: Response) => {
     const { email, password, name, surname, birthday, phone } = req.body;
@@ -24,8 +25,26 @@ export const registerUser = async (req: Request, res: Response) => {
         });
     } else {
         try {
+            logger.info('Attempting to create user with email and password...');
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            logger.info(`User created, UID: ${userCredential.user.uid}`);
+
+            logger.info('Sending email verification...');
             await sendEmailVerification(auth.currentUser!);
+            logger.info('Email verification sent');
+
+            logger.info('Creating new Operator entity...');
+
+            const companyId = '8eb83b3c-f744-4df3-bf07-371eb58a1528';
+            const company = await AppDataSource.getRepository(Company).findOne({
+                where: {
+                    id: companyId,
+                },
+            });
+
+            if (!company) {
+                throw new Error('Company not found');
+            }
 
             const operator = AppDataSource.getRepository(Operator).create({
                 email,
@@ -33,15 +52,19 @@ export const registerUser = async (req: Request, res: Response) => {
                 surname,
                 birthday,
                 phone,
-                firebaseUserId: userCredential.user.uid, // Store firebaseUserId
-                roles: [Role.OPERATOR], // Assign operator role by default
+                firebaseUserId: userCredential.user.uid,
+                company,
+                roles: [Role.OPERATOR],
             });
+            logger.info('Saving Operator to database...');
             await AppDataSource.getRepository(Operator).save(operator);
+            logger.info('Operator saved successfully');
 
             res.status(201).json({
                 message: 'Verification email sent! User created successfully!',
             });
         } catch (error) {
+            console.error(error);
             const errorMessage =
                 (error as Error).message || 'An error occurred while registering user';
             res.status(500).json({ error: errorMessage });
